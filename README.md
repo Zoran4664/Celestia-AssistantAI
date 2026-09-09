@@ -1,16 +1,27 @@
 ## 一、项目介绍
+<img width="3212" height="734" alt="Celestia AssistantAI" src="https://github.com/user-attachments/assets/cd37bf67-8cca-46e8-9a5f-f6e1dc0d9841" />
 
 Celestia AssistantAI是一个基于 Python + PySide6 + ChromaDB 的多模态大模型角色对话 Agent 桌面（花瓶）应用，使用了调用deepseek V4的Cline与DSH（大烧货）完成。页面风格参考了常见LLM网页端的布局。未来的目标是实现日常办公学习的辅助以及文字聊天。
 对话方面本项目使用了chromaDB等实现了三级记忆的管理，确保在不遗忘关键记忆的同时能以最大性价比得到个性化的体验（灵感和思路参考了B站Play0编写的昔莲Cyrene-Agent，德谬歌在发力嗯）。
+
 本项目通过提示词实现了在日常对话时角色形象会随对话内容的情绪改变（目前内部尚未完成设计，只在测试性实现思路。目前项目内置4位角色（Twilight Sparkle, Rainbow Dash, Fluttershy, Applejack）和5种情绪（平静、震惊、伤心、生气、开心）），这部分未来预计会持续丰富，现演示角色的角色图片为ZoinkscoobFurryNoobAI_V10配合基于Gemini banana模型风格的Lora使用秋叶WebUI与comfyUI生成。其他图片素材均没有仔细绘制。
+
 同时本应用内置正在持续完善的桌面桌宠功能（目前使用gif和图片切换实现了该部分功能，效果不尽人意，未来再完善了）。
+
 日常聊天支持多角色对话（还在优化，角色切换的实现效果有时略抽风）和随机主动对话，同时支持加载与管理skill（现在里面的就是我占位用的，后续要改）能够协助办公学习。
-由于梁圣最近因DeepseekV4全面涨价评级降低为梁子，所以为了节省API费用，以及便宜的鲸鱼娘暂未睁眼，以及部分绘图需求，目前模型支持设置主模型/整理记忆用的小模型与MoE多模态模型的分别配置，以及skill的特殊使用需求独立模型，以及支持ollama本地部署模型和硅基流动等聚合站点的API（如因聚合站点的免费账户TPM/RPM存在限制，因此增加了较为严格的打断机制以免影响体验）
+
+由于梁圣最近因DeepseekV4全面涨价评级降低为梁子，所以为了节省API费用，以及便宜的鲸鱼娘暂未睁眼，以及部分绘图需求，目前模型支持设置主模型/整理记忆用的小模型与MoE多模态模型的分别配置，以及skill的特殊使用需求独立模型，以及支持ollama本地部署模型和硅基流动等聚合站点的API（如因聚合站点的免费账户TPM/RPM存在限制，因此增加了较为严格的打断机制以免影响体验）。
+
 桌宠功能包括了休息提醒、倒计时提醒等实用工具，以及专为网课增加的专注助手（选择页面，若页面被切入后台则进行提示提醒与鞭策）。同时本应用会记录应用打开时间、使用情况等信息，后期在提示对话内容也会更加的个性化。
+
 本项目支持配置Search API(如谷歌/百度等)，能够打通联网搜索功能，并支持思维链显示（需模型原生支持，否则为伪思维链）。
+
 本项目也内置了简单的日记本与记录工具，通过记录，角色也能够越来越智能。
+
 本项目也支持读取json格式的标准对话文本数据，你也可以导入扩增后/提取后的对话进行微调。
+
 目前正在调试Role Play功能，该功能拟实现达到简易酒馆的体验效果，并且可以配置工具功能（例如切换语言风格与对话任务，甚至你可以加入破甲指令！）。
+<img width="1440" height="720" alt="intro" src="https://github.com/user-attachments/assets/4a4d916a-bccc-4c82-b35d-2545c92511e0" />
 
 ---
 
@@ -48,6 +59,7 @@ V0.2.4
 
 V0.2.5
 模型优化了主动设置的遗忘策略。
+<img width="3038" height="1408" alt="SourcecodeGodLaunch" src="https://github.com/user-attachments/assets/a279c550-2550-44cc-8cc4-d2feec077d1f" />
 
 ---
 
@@ -105,19 +117,22 @@ V0.2.5
 如果没有环境请去https://python.org下载（不要用百度搜永久免费版python！）
 
 # 4.2 安装环境依赖
-安装相关的库
-可以点击start.py安装，也可以直接使用pip install指令
+安装相关的库可以点击start.py安装，也可以直接使用pip install指令
 pip install -r 路径/requirements.txt
+
 注：如果速度太慢可以考虑切换国内源（清华/阿里云/中科大/华为云，推荐清华源）
-指令形式参考
-pip install ChromaDB -i https://pypi.tuna.tsinghua.edu.cn/simple/
+指令形式参考pip install ChromaDB -i https://pypi.tuna.tsinghua.edu.cn/simple/
 
 
 # 4.3 配置模型服务
 在启动后，可以进入设置界面配置LLM APIKey。
+
 建议主模型选择一个具有一个比较贵的高质量长上下文的模型（DeepSeek V4/Gemini/gpt等等）,提取记忆用的小模型可以配置一些便宜的节省经费（例如：Qwen3 7B/Qwen/Qwen3.5-35B-A3B）。
+
 多模态用于阅读文档图片等，这个API必须原生支持多模态MoE，国内的Qwen就是原生支持的，歌且各种微调的版本比较多，建议去中转站。
+
 生图API必须模型支持图片生成功能，若生成图片则调用该API。
+
 特殊技能的独立API可以在设置-技能工具管理器中单独设置，需要\@开启才可以调用。
 
 ## 五、页面与功能
