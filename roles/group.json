@@ -1,0 +1,30 @@
+{
+  "groups": {
+    "朋友群聊": {
+      "members": ["Twilight_Sparkle", "Rainbow_Dash", "Fluttershy", "Applejack"],
+      "speaker_hint": "回复必须以 [角色名]: 内容 开头",
+      "aliases": {
+        "暮光闪闪": "Twilight_Sparkle",
+        "紫悦": "Twilight_Sparkle",
+        "云宝黛茜": "Rainbow_Dash",
+        "云宝": "Rainbow_Dash",
+        "小蝶": "Fluttershy",
+        "柔柔": "Fluttershy",
+        "苹果杰克": "Applejack",
+        "阿杰": "Applejack",
+        "苹果嘉儿": "Applejack"
+      }
+    },
+    "挚友群聊": {
+      "members": ["Twilight_Sparkle", "Rainbow_Dash"],
+      "speaker_hint": "回复必须以 [角色名]: 内容 开头",
+      "aliases": {
+        "暮光闪闪": "Twilight_Sparkle",
+        "紫悦": "Twilight_Sparkle",
+        "云宝黛茜": "Rainbow_Dash",
+        "云宝": "Rainbow_Dash"
+      }
+    }
+  },
+  "description": "群聊预设。结构: {\"group_name\": {\"members\": [\"角色名\"], \"speaker_hint\": \"回复格式约束，如 [角色名]: 内容\", \"aliases\": {\"中文昵称\": \"角色名\"}}}。群聊判定：用户消息点名（角色名/显示名/别名）→ 由该角色回复（多名字取第一个）；未点名 → 调用 API 内部判定最该发言的成员（判定结果不输出），失败回退解析。"
+}

@@ -1,0 +1,23 @@
+# =============================================================
+# 主文件与主应用 — docker-compose 运行示例
+# 用法：
+#   docker compose up -d                      # 构建并启动（GUI 需 X11 转发）
+#   docker compose exec app python tools/smoke_test.py   # 无头冒烟测试
+# =============================================================
+services:
+  app:
+    build: .
+    container_name: ai_deskmate
+    environment:
+      - DISPLAY=${DISPLAY:-:0}
+      - QT_X11_NO_MITSHM=1
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./history:/app/history:rw
+      - ./data:/app/data:rw
+      - ./roles:/app/roles:ro
+      - ./roles_img:/app/roles_img:ro
+      - ./roles_desktop:/app/roles_desktop:ro
+      - ./theme:/app/theme:ro
+    network_mode: host
+    restart: unless-stopped

@@ -1,0 +1,81 @@
+{
+  "api": {
+    "provider": "custom",
+    "api_base": "",
+    "api_key": "",
+    "main_model": "gpt-4o",
+    "small_base": "",
+    "small_key": "",
+    "small_model": "gpt-4o-mini",
+    "vision_base": "",
+    "vision_key": "",
+    "vision_model": "gpt-4o",
+    "image_base": "",
+    "image_key": "",
+    "image_model": "",
+    "image_dir": "./createimage"
+  },
+  "paths": {
+    "roles": "./roles",
+    "roles_img": "./roles_img",
+    "roles_desktop": "./roles_desktop",
+    "theme": "./theme",
+    "history": "./history",
+    "data": "./data",
+    "skills": "./skills"
+  },
+  "user_avatar": "",
+  "chat": {
+    "temperature": 0.7,
+    "max_tokens": 3076,
+    "stream": true
+  },
+  "memory": {
+    "trim_threshold": 20,
+    "keep_rounds": 10,
+    "top_k_long_term": 3,
+    "top_k_important": 2,
+    "forgetting_interval_days": 30,
+    "hit_threshold": 8,
+    "cleanup_interval_hours": 24,
+    "denoise_enabled": true,
+    "denoise_timeout_seconds": 5.0,
+    "dedup_high_similarity": 0.15,
+    "dedup_partial_similarity": 0.45,
+    "merge_max_depth": 3,
+    "merge_drift_threshold": 0.55
+  },
+  "pet": {
+    "enabled": true,
+    "greeting_interval_min": 5,
+    "sleep_hours": [
+      22,
+      6
+    ],
+    "focus_mode": false,
+    "floating_chat": true,
+    "zoom_enabled": true
+  },
+  "ui": {
+    "blur_background": true,
+    "random_proactive": true,
+    "window_opacity": 0.92,
+    "accent": "#6c8ef5",
+    "theme_file": "\\theme\\test.png",
+    "icon_path": "",
+    "transparent_chat": false,
+    "user_name": "用户",
+    "font_family": "SimSun",
+    "last_role": "Rainbow_Dash",
+    "last_group": "",
+    "last_mode": "单聊",
+    "login_time_enabled": false,
+    "show_thinking": false,
+    "chat_font_size": 13
+  },
+  "web": {
+    "enabled": false,
+    "search_base": "",
+    "search_key": ""
+  }
+}

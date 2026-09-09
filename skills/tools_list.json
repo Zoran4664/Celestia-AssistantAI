@@ -1,0 +1,212 @@
+{
+  "updated": "2026-08-11 21:55:41",
+  "count": 17,
+  "skills": [
+    {
+      "name": "健康咨询",
+      "trigger": "health",
+      "kind": "skill",
+      "aliases": [
+        "健康",
+        "健康咨询"
+      ],
+      "category": "生活",
+      "enabled": true
+    },
+    {
+      "name": "写代码",
+      "trigger": "code",
+      "kind": "skill",
+      "aliases": [
+        "写代码",
+        "代码",
+        "编程",
+        "python"
+      ],
+      "category": "工具",
+      "enabled": true
+    },
+    {
+      "name": "创意",
+      "trigger": "create",
+      "kind": "skill",
+      "aliases": [
+        "创意",
+        "创作"
+      ],
+      "category": "创作",
+      "enabled": true
+    },
+    {
+      "name": "办公",
+      "trigger": "work",
+      "kind": "skill",
+      "aliases": [
+        "办公",
+        "公文",
+        "报告"
+      ],
+      "category": "工具",
+      "enabled": true
+    },
+    {
+      "name": "医学研究",
+      "trigger": "med",
+      "kind": "skill",
+      "aliases": [
+        "医学",
+        "医学研究"
+      ],
+      "category": "科研",
+      "enabled": true
+    },
+    {
+      "name": "思维链",
+      "trigger": "thinking",
+      "kind": "switch",
+      "aliases": [
+        "思维链",
+        "推理",
+        "思考"
+      ],
+      "category": "开关",
+      "enabled": true
+    },
+    {
+      "name": "教育学习",
+      "trigger": "education",
+      "kind": "skill",
+      "aliases": [
+        "教育",
+        "学习",
+        "教学"
+      ],
+      "category": "教育",
+      "enabled": true
+    },
+    {
+      "name": "数学",
+      "trigger": "math",
+      "kind": "skill",
+      "aliases": [
+        "数学",
+        "math"
+      ],
+      "category": "工具",
+      "enabled": true
+    },
+    {
+      "name": "文案",
+      "trigger": "words",
+      "kind": "skill",
+      "aliases": [
+        "文案",
+        "广告",
+        "软文"
+      ],
+      "category": "创作",
+      "enabled": true
+    },
+    {
+      "name": "时间",
+      "trigger": "time",
+      "kind": "skill",
+      "aliases": [
+        "时间",
+        "几点了",
+        "日期",
+        "今天"
+      ],
+      "category": "工具",
+      "enabled": true
+    },
+    {
+      "name": "生成图片",
+      "trigger": "image",
+      "kind": "skill",
+      "aliases": [
+        "生成图片",
+        "图片",
+        "images"
+      ],
+      "category": "创作",
+      "enabled": true
+    },
+    {
+      "name": "科研",
+      "trigger": "research",
+      "kind": "skill",
+      "aliases": [
+        "科研",
+        "学术",
+        "研究",
+        "论文"
+      ],
+      "category": "科研",
+      "enabled": true
+    },
+    {
+      "name": "绘画",
+      "trigger": "draw",
+      "kind": "skill",
+      "aliases": [
+        "绘画",
+        "画图",
+        "作画",
+        "插画"
+      ],
+      "category": "创作",
+      "enabled": true,
+      "image_gen": true
+    },
+    {
+      "name": "翻译",
+      "trigger": "translate",
+      "kind": "skill",
+      "aliases": [
+        "翻译",
+        "fanyi",
+        "译一下"
+      ],
+      "category": "工具",
+      "enabled": true
+    },
+    {
+      "name": "联网搜索",
+      "trigger": "network",
+      "kind": "switch",
+      "aliases": [
+        "联网",
+        "搜索",
+        "联网搜索"
+      ],
+      "category": "开关",
+      "enabled": true,
+      "network_enabled": true
+    },
+    {
+      "name": "计算",
+      "trigger": "calc",
+      "kind": "skill",
+      "aliases": [
+        "计算",
+        "算一下"
+      ],
+      "category": "工具",
+      "enabled": true
+    },
+    {
+      "name": "记忆训练",
+      "trigger": "train",
+      "kind": "skill",
+      "aliases": [
+        "训练",
+        "记住",
+        "记忆",
+        "记忆训练"
+      ],
+      "category": "记忆",
+      "enabled": true
+    }
+  ]
+}
