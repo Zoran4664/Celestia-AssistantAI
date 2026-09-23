@@ -4,7 +4,9 @@ role_manager.py — 角色库 / 群聊预设解析（RoleManager 单例）
 - 扫描 roles/ 目录解析角色卡（roles.json）与情感映射（emotion.json）
 - 群聊发言者解析（parse_speaker）：正则兜底 + 容错机制，兼容
   「[角色A]: 内容」「角色A：内容」「角色A: 内容」「角色A 说：内容」
-  「“内容” ——角色A」等多种变体（容忍多余空格、全角/半角冒号）
+  「“内容” ——角色A」等多种变体（容忍多余空格、全角/半角冒号）；
+  **名字一律先归一化再比较**（``Twilight_Sparkle`` ≡ ``Twilight Sparkle``，
+  见 normalize_role_name / match_member），否则模型用空格写法时解析与剥离全部失配
 - 情感标签归一化：从回复文本提取 [emotion:x] / 【xx】 标签，映射为标准情感
 - 立绘 / 桌宠动图路径解析（兼容多目录布局）
 """
@@ -15,8 +17,9 @@ import json
 import logging
 import random
 import re
+import unicodedata
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("AI_DeskMate.Role")
 
@@ -41,6 +44,49 @@ _SPEAKER_PATTERNS = [
     # “内容” ——角色A / “内容”——角色A
     r'^[“"](?P<content>.+?)[”"]\s*[-—–]\s*(?P<name>[^，,。\s].{0,20})\s*$',
 ]
+
+# ================================================================
+# 角色名归一化 / 归属匹配 —— 全项目「名字比较」的唯一口径
+# ================================================================
+# 需求（用户 2026-09-23）：群聊出现「发言人与角色名错位」+「[角色名]: 前缀原样显示」：
+#     [Twilight Sparkle]: (优雅地行了个屈膝礼)下午好！……
+# 这条本该记在 Twilight_Sparkle 名下，界面却显示成 Applejack 发言，
+# 而且「[Twilight Sparkle]:」这几个字直接留在了气泡正文里。
+#
+# 根因：**同一个角色存在两套名字写法**——
+#   * 成员表 / 角色目录名是**下划线**形式：roles/Twilight_Sparkle、
+#     roles/group.json 的 members = ["Twilight_Sparkle", …]；
+#   * 模型输出是**空格**形式：[Twilight Sparkle]:（角色卡 system_prompt 里
+#     自称「你是Twilight Sparkle」，模型照着念就会写成空格）。
+# 而发言者解析（parse_speaker）与前缀剥离（_strip_group_prefix）都用
+# `==` / `re.escape(name)` 做**逐字符**匹配 → 必然失配，于是：
+#   ① parse_speaker 归不到成员 → resolve_speaker 回退「上一发言者」= 张冠李戴；
+#   ② 前缀剥离不中 → [Twilight Sparkle]: 原样显示在气泡里。
+#
+# 规则：**任何**把「文本里的名字」映射到「成员标准名」的地方，都必须先过
+# :func:`normalize_role_name` 再比较，覆盖 下划线 / 空格 / 连字符 / 中点 /
+# 全角半角 / 首尾括号 / 大小写 的差异。新增解析或剥离代码时照此办理。
+_NAME_SEP_RE = re.compile(r"[\s_\-–—·・.．、]+")
+_NAME_WRAP_RE = re.compile(r"^[\s\[【（(「『“\"'*#]+|[\s\]】）)」』”\"'*#]+$")
+
+#: 归一化子串匹配时两边都至少要这么长 —— 防止单字母/单字误命中某成员
+_MIN_FUZZY_LEN = 2
+
+
+def normalize_role_name(name: Any) -> str:
+    """角色名**归一化键**（只用于比较，绝不用于显示）。
+
+    例：``Twilight_Sparkle`` ≡ ``Twilight Sparkle`` ≡ ``twilight-sparkle`` ≡
+    ``Ｔｗｉｌｉｇｈｔ＿Ｓｐａｒｋｌｅ`` ≡ ``[Twilight Sparkle]``。
+
+    步骤：NFKC（全角→半角）→ 去首尾括号/引号/装饰符 → 去分隔符（下划线/空格/
+    中点/连字符等）→ 折叠大小写。空输入返回空串。
+    """
+    s = unicodedata.normalize("NFKC", str(name or ""))
+    s = _NAME_WRAP_RE.sub("", s)
+    s = _NAME_SEP_RE.sub("", s)
+    return s.casefold()
+
 
 # 情感标签正则
 # 支持【xx】/ [xx] / 〖xx〗（双角括号，需求：每句情绪标注用〖〗，绝不显示）
@@ -143,16 +189,14 @@ class RoleManager:
         return "".join(out) + ellipsis
 
     def sidebar_label(self, name: str) -> str:
-        """角色在侧边栏显示的缩写/短名。
+        """角色在侧边栏/顶部选择框显示的名称（**完整显示，不做 … 截断**）。
 
-        优先使用 data/role_abbr.json 的缩写（如 Rainbow_Dash -> RD）；
-        无映射时用角色显示名并按 SIDEBAR_MAX_WIDTH 宽度截断兜底，
-        从根上避免长角色名导致侧边栏换行/错乱。
+        优先使用 data/role_abbr.json 的映射值（如 Rainbow_Dash -> RD 或
+        Rainbow_Dash云宝黛茜）；无映射时用角色显示名。
+        需求：主界面角色名必须完整 —— 调用方（选择框）按最长条目自适应宽度，
+        因此这里不再按 SIDEBAR_MAX_WIDTH 截断（那会出现「Rainbow_Da…」）。
         """
-        abbr = self._abbr_map().get(name)
-        if abbr:
-            return abbr
-        return self.truncate_wide(self.display_name(name))
+        return self._abbr_map().get(name) or self.display_name(name)
 
     def full_name(self, text: str) -> str:
         """下拉框显示文本 -> 真实角色目录名（缩写反向映射；无匹配返回原样）。"""
@@ -328,7 +372,9 @@ class RoleManager:
                          aliases: Optional[Dict[str, str]] = None) -> str:
         """从用户输入中解析点名触发的成员（多个名字时取文本中第一个出现者）。
 
-        匹配范围：角色名 / display_name / 下划线名空格形式 / 群聊别名（中文昵称）。
+        匹配范围：角色名 / display_name / 下划线名空格形式 / 群聊别名（中文昵称）；
+        都没命中时再按 :func:`normalize_role_name` 归一化键扫一遍（大小写、
+        分隔符写法无关，如 ``TwilightSparkle``）。
         未命中任何成员时返回空串（表示需要由 AI 判定谁最该发言）。
         """
         if not text or not members:
@@ -353,10 +399,30 @@ class RoleManager:
             idx = text.find(word)
             if idx != -1:
                 hits.append((idx, canonical))
-        if not hits:
+        if hits:
+            hits.sort(key=lambda x: x[0])   # 多个名字 → 取文本中第一个出现者
+            return hits[0][1]
+        # 兜底：上面没命中时按**归一化键**再扫一遍 —— 覆盖「TwilightSparkle」
+        # 「twilight  sparkle」这类分隔符/大小写写法（用户 2026-09-23：
+        # 名字匹配一律走归一化口径）。位置按归一化文本中的下标近似排序。
+        norm_text = normalize_role_name(text)
+        if not norm_text:
             return ""
-        hits.sort(key=lambda x: x[0])   # 多个名字 → 取文本中第一个出现者
-        return hits[0][1]
+        cands: List[Tuple[int, str]] = []
+        for m in members:
+            for form in (m, self.display_name(m)):
+                nm = normalize_role_name(form)
+                if nm and nm in norm_text:
+                    cands.append((norm_text.find(nm), m))
+                    break
+        for k, v in (aliases or {}).items():
+            nm = normalize_role_name(k)
+            if nm and v in members and nm in norm_text:
+                cands.append((norm_text.find(nm), v))
+        if not cands:
+            return ""
+        cands.sort(key=lambda x: x[0])
+        return cands[0][1]
 
     def member_intro(self, members: List[str]) -> str:
         """生成群聊成员简档（名字 + 性格），供 API 内部判定发言者时使用。"""
@@ -368,8 +434,64 @@ class RoleManager:
         return "\n".join(lines)
 
     # ------------------------------------------------------------ 发言者解析
-    def parse_speaker(self, reply: str, members: List[str]) -> str:
-        """从群聊回复中解析发言者。解析失败返回空串（由上层兜底）。"""
+    def match_member(self, raw: str, members: List[str],
+                     aliases: Optional[Dict[str, str]] = None) -> str:
+        """把**任意写法**的角色名归到群成员标准名；归不到返回空串。
+
+        （「名字比较」的唯一口径，理由见模块顶部「角色名归一化 / 归属匹配」）
+
+        匹配优先级：
+          ① 归一化后**完全相等** —— 覆盖 成员名 / display_name / 别名键 / 别名值；
+          ② 归一化后**互为子串**（如 ``Twilight`` ↔ ``Twilight_Sparkle``）——
+             两边都 ≥ ``_MIN_FUZZY_LEN`` 字符才允许；多个候选取「在原文里出现
+             更早」者，位置相同时取更长者（不让 members 的书写顺序决定结果）；
+          ③ 都不中 → 空串，兜底策略交给调用方（回退上一发言者 / 随机）。
+        """
+        if not raw or not members:
+            return ""
+        key = normalize_role_name(raw)
+        if not key:
+            return ""
+        alias_map = {str(k).strip(): str(v).strip()
+                     for k, v in (aliases or {}).items()}
+        # ① 归一化后精确相等
+        for m in members:
+            if normalize_role_name(m) == key:
+                return m
+            dn = self.display_name(m)
+            if dn and normalize_role_name(dn) == key:
+                return m
+        for k, v in alias_map.items():
+            if v in members and normalize_role_name(k) == key:
+                return v
+        # ② 归一化后互为子串（两边都要够长，避免单字母乱命中）
+        cands: List[Tuple[int, int, str]] = []
+        for m in members:
+            for form in (m, self.display_name(m)):
+                nm = normalize_role_name(form)
+                if len(nm) < _MIN_FUZZY_LEN:
+                    continue
+                if (nm in key or key in nm) and min(len(nm), len(key)) >= _MIN_FUZZY_LEN:
+                    pos = key.find(nm)
+                    cands.append((pos if pos >= 0 else len(key), -len(nm), m))
+                    break
+        if not cands:
+            return ""
+        cands.sort()
+        return cands[0][2]
+
+    def parse_speaker(self, reply: str, members: List[str],
+                      aliases: Optional[Dict[str, str]] = None) -> str:
+        """从群聊回复中解析发言者（**成员标准名**；解析失败返回空串）。
+
+        需求（用户 2026-09-23）：名字必须走 :meth:`match_member` 的**归一化**口径。
+        旧实现用 ``name == member or member in name or name in member`` 逐字符比较，
+        模型写「[Twilight Sparkle]:」而成员表是「Twilight_Sparkle」时直接失配，
+        上层于是回退成「上一发言者」，把这条回复挂到了错误角色名下。
+
+        解析不出成员名时**返回原文里解析到的名字**（可能是模型自造名），
+        由 :meth:`resolve_speaker` 决定兜底策略。
+        """
         if not reply or not members:
             return ""
         for pat in _SPEAKER_PATTERNS:
@@ -379,27 +501,37 @@ class RoleManager:
             name = (m.group("name") or "").strip()
             if not name:
                 continue
-            # 容错匹配：精确 / 包含
-            for member in members:
-                if name == member or member in name or name in member:
-                    return member
-            return name  # 无法归入成员时返回解析到的名字，供上层处理
+            return self.match_member(name, members, aliases) or name
         return ""
 
     def resolve_speaker(self, reply: str, members: List[str],
-                        previous: Optional[str] = None) -> str:
-        """带兜底的发言者解析。
+                        previous: Optional[str] = None,
+                        aliases: Optional[Dict[str, str]] = None) -> str:
+        """带兜底的发言者解析（返回成员标准名）。
 
-        解析失败时回退上一个发言者；若仍无（会话首条），则随机选择一名群成员。
+        顺序：解析到成员 → 直接用；解析到名字但归不进成员 → 再做一次宽松归属
+        匹配（:meth:`match_member` 的子串兜底）；仍不行才回退上一发言者——
+        **且上一发言者必须仍在成员表内**（切换群聊后不该沿用旧角色），
+        最后随机选一名成员。
         """
-        name = self.parse_speaker(reply, members)
+        if not members:
+            return ""
+        name = self.parse_speaker(reply, members, aliases)
         if name in members:
             return name
-        if previous:
+        hit = self.match_member(name, members, aliases)
+        if hit:
+            return hit
+        if previous in members:
+            if name:
+                # 记一条日志：模型写了名字却归不进成员表，属可疑情况，便于排查
+                logger.warning("群聊发言者「%s」无法归入成员表 %s → 回退上一发言者 %s",
+                               name, members, previous)
             return previous
-        if members:
-            return random.choice(members)
-        return ""
+        if previous:
+            logger.warning("上一发言者「%s」已不在成员表 %s → 随机选一位",
+                           previous, members)
+        return random.choice(members)
 
     # ------------------------------------------------------------ 立绘 / 动图
     def portrait_path(self, role: str, emotion: Optional[str] = None) -> str:

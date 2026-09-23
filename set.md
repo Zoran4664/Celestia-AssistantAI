@@ -20,19 +20,19 @@
 ├── requirements.txt        依赖清单
 ├── README.md               完整设计文档
 ├── set.md                  本文档
-├── data\                   ★ 程序数据目录
+├── data\                   · 程序数据目录
 │   ├── config.json            全局设置（API/模型/路径/记忆/桌宠/外观）
 │   └── user_avatar.png         用户头像
-├── roles\                  ★ 角色库（角色卡存放处）
+├── roles\                  · 角色库（角色卡存放处）
 │   ├── group.json             群聊组配置
 │   └── 角色名\                 每个角色一个文件夹（名 = 角色名）
 │       ├── roles.json         角色卡（名字/性格/系统提示词）
 │       └── emotion.json       情绪关键词映射
-├── roles_img\              ★ 对话立绘（主界面左侧角色形象）
+├── roles_img\              · 对话立绘（主界面左侧角色形象）
 │   └── 角色名\
 │       ├── 角色名-.png            默认立绘
 │       └── 角色名-happy.png      情绪立绘
-├── roles_desktop\          ★ 桌宠动图
+├── roles_desktop\          · 桌宠动图
 │   └── 角色名\
 │       ├── 角色名-standing.gif    静止
 │       ├── 角色名-run.gif         拖动
@@ -41,11 +41,11 @@
 │       ├── 角色名-hello.gif       问候
 │       ├── 角色名-sleep.gif       休息
 │       └── 角色名-work.gif        专注
-├── theme\                 ★ 背景图片（default.png 等，可在设置中选用）
-├── skills\                ★ 技能工具库（\@技能 唤醒）
+├── theme\                 · 背景图片（default.png 等，可在设置中选用）
+├── skills\                · 技能工具库（\@技能 唤醒）
 │   ├── tools_list.json            技能目录（name/trigger/kind/aliases/category/enabled）
 │   └── skilltools_information.json 技能详情（description/prompt_template/parameters）
-├── history\               ★ 记忆与对话存档
+├── history\               · 记忆与对话存档
 │   ├── chroma\              长期/重要记忆（ChromaDB 向量库，自动生成）
 │   └── conversations\       短期对话与历史会话（自动生成）
 ├── utils\                 日志与线程工具（勿手动修改）

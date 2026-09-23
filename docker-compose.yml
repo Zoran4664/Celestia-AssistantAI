@@ -1,8 +1,8 @@
 # =============================================================
-# 主文件与主应用 — docker-compose 运行示例
+# Celestia AssistantAI — docker-compose 运行示例
 # 用法：
 #   docker compose up -d                      # 构建并启动（GUI 需 X11 转发）
-#   docker compose exec app python tools/smoke_test.py   # 无头冒烟测试
+#   docker compose exec app python -m py_compile main.py # 语法自检
 # =============================================================
 services:
   app:

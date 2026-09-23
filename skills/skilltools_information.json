@@ -26,13 +26,13 @@
   },
   "生成图片": {
     "description": "根据描述生成图像提示词或画面构思。",
-    "prompt_template": "用户调用了「生成图片」技能。请输出一段可用于图像生成的英文提示词（paint prompt），并在下一行给出中文画面描述。",
+    "prompt_template": "用户调用了「生成图片」技能。请严格根据{提示词}，调用生图API生成图片。",
     "parameters": [],
     "image_gen": true,
     "network_enabled": false,
-    "api_base": "https://api.siliconflow.cn/v1/",
+    "api_base": "https://maas.qianwenaiapi.com/api/v1/",
     "api_key": "",
-    "api_model": "Qwen/Qwen-Image"
+    "api_model": "qwen-image-3.0"
   },
   "教育学习": {
     "description": "学习辅导、知识讲解、学习规划与因材施教",
@@ -79,7 +79,12 @@
         "default": "英文",
         "required": false
       }
-    ]
+    ],
+    "image_gen": false,
+    "network_enabled": false,
+    "api_base": "",
+    "api_key": "",
+    "api_model": ""
   },
   "计算": {
     "description": "数学计算与公式推导。",
@@ -93,13 +98,76 @@
   },
   "绘画": {
     "description": "根据描述生成图像提示词或画面构思。",
-    "prompt_template": "用户调用了「绘画」技能。请输出一段可用于图像生成的英文提示词（paint prompt），并在下一行给出中文画面描述。",
+    "prompt_template": "用户调用了「绘画」技能。请根据提示词生成位美术图片。",
     "parameters": [],
-    "image_gen": true
+    "image_gen": true,
+    "network_enabled": false,
+    "api_base": "",
+    "api_key": "",
+    "api_model": ""
   },
   "科研": {
     "description": "文献检索、实验设计、数据分析与论文写作等学术问题的专业助手",
     "prompt_template": "你是一名严谨的科研助手，精通文献检索、实验设计、数据分析与学术写作。请遵循科研伦理，回答需客观、准确、有据可依，涉及结论时尽量给出推理依据。",
     "parameters": []
+  },
+  "读取文件": {
+    "description": "读取本机文件内容（受路径权限保护；支持 txt/md/docx/xlsx/pdf 等）。用法：\\@read 路径",
+    "prompt_template": "用户想读取文件。由程序直接读取并展示内容，无需 LLM 生成。",
+    "parameters": []
+  },
+  "写入文件": {
+    "description": "把内容写入本机文件（受路径权限保护，写入前自动备份快照，可回滚）。用法：\\@write 路径 内容",
+    "prompt_template": "用户想写文件。由程序直接写入并展示结果。",
+    "parameters": [],
+    "permission": "review"
+  },
+  "修改文件": {
+    "description": "替换文件中的文本（受路径权限保护，写入前自动备份快照，可回滚）。用法：\\@edit 路径 旧文本|新文本",
+    "prompt_template": "用户想修改文件。由程序直接执行替换。",
+    "parameters": [],
+    "permission": "review"
+  },
+  "自动技能AutoSkills": {
+    "description": "开启 skill库 自动技能模式（\\@autoskills）：AI 程序自行读取 skill库（skillspub）指引，自动挑选并组合调用公共技能（一次可多个）。",
+    "prompt_template": "用户已开启「自动技能 AutoSkills」模式：请主动读取 skill库（skillspub）指引，判断本条消息最适合的公共技能并自动组合调用（一次可多个）；若确实与公共技能无关则正常回答。",
+    "parameters": [],
+    "image_gen": false,
+    "network_enabled": false
+  },
+  "skill库Skillspub": {
+    "description": "开启 skill库（skillspub 公共技能库）（\\@skillspub）：允许用户/AI 自由调用 skill库 中的公共技能（一次可调用多个并组合），也可在输入框用 #技能名 直接点名调用。",
+    "prompt_template": "用户已开启「skill库 Skillspub」模式：本轮允许自由调用 skill库（skillspub）中的公共技能，一次可调用一个或多个并互相组合，请严格按各技能的详细介绍与执行说明执行。",
+    "parameters": [],
+    "image_gen": false,
+    "network_enabled": false
+  },
+  "小说学习": {
+    "description": "总结上传的小说附件：摘要 / 剧情 / 时间 / 人物 / 地点场景 / 风格类型 / 人物心理与剧情发展 / 故事情节，并产出「角色扮演复刻」设定，本次对话即可按原作剧情开始角色扮演；总结同时以 JSON 存到 novellearn/（文件名+年月日时分），以后可用 \\@novellearn 关键词 读取。用法：上传小说后发送 \\@novellearn",
+    "prompt_template": "用户调用了「小说学习」技能：由程序读取附件、分段提炼并生成结构化总结与角色扮演复刻设定，存档到 novellearn/，无需 LLM 生成。",
+    "parameters": [],
+    "image_gen": false,
+    "network_enabled": false
+  },
+  "天气查询": {
+    "description": "查询天气（和风天气 QWeather）：默认本机 IP 所在地，也可输入城市/区县（\\@weather 上海 浦东）。展示实况、预报、生活指数、预警、空气质量与 Windy 链接；提示词含「天文/太阳辐射/时光机/台风/海洋/降水」时追加对应模块。KEY 在「设置 → 常用接口类 API 管理器 → 和风天气」填写。",
+    "prompt_template": "用户调用了「天气查询」技能：由程序调用和风天气接口并渲染 HTML5 天气卡片，无需 LLM 生成。",
+    "parameters": [],
+    "image_gen": false,
+    "network_enabled": true
+  },
+  "饮食热量": {
+    "description": "估算饮食热量（优先联网核对中国食物成分表 https://nlc.chinanutri.cn/fq/），把「时间 + 饮食 + 热量」写入 data/dailylifedata.json 并按天汇总，同时按《中国居民膳食指南》给出简单饮食指导。用法：\\@calorie 一碗牛肉面加一个茶叶蛋",
+    "prompt_template": "用户调用了「饮食热量」技能：由程序估算热量、记录到 data/dailylifedata.json 并给出膳食建议，无需 LLM 额外生成。",
+    "parameters": [],
+    "image_gen": false,
+    "network_enabled": true
+  },
+  "小马网站检测": {
+    "description": "检测 data/ponywebsite.txt 里的小马同好网站能不能 ping 通，并给出丢包率与最小/平均/最大延迟；站点禁 ping 时自动降级为 TCP 握手延迟。用法：\\@ponywebsite（全部）｜\\@ponywebsite 呆站（筛选）｜\\@ponywebsite derpibooru.org（临时网址）｜\\@ponywebsite -n 10（发包数）",
+    "prompt_template": "用户调用了「小马网站检测」技能：由程序读取 data/ponywebsite.txt、并行 ping 并渲染 HTML5 结果卡片，无需 LLM 生成。",
+    "parameters": [],
+    "image_gen": false,
+    "network_enabled": true
   }
 }

@@ -10,11 +10,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
-    QApplication, QFrame, QGraphicsDropShadowEffect, QListWidget,
-    QListWidgetItem, QVBoxLayout, QWidget,
+    QAbstractItemView, QApplication, QFrame, QGraphicsDropShadowEffect,
+    QListWidget, QListWidgetItem, QVBoxLayout, QWidget,
 )
 
 _ACCENT = "#6c8ef5"
@@ -51,8 +51,10 @@ QListWidget#skillList::item:hover {{
 }}
 """
 
-_ITEM_H = 36          # 单条技能行高
+_ITEM_H = 36          # 兜底行高（实际以 sizeHintForRow 的真实渲染行高为准）
 _MAX_VISIBLE = 8      # 最多同时可见条目数
+_POPUP_MIN_W = 260    # 弹窗最小宽度
+_POPUP_MAX_W = 520    # 弹窗最大宽度（内容更宽时出横向滚动条）
 
 
 class SkillPopup(QFrame):
@@ -80,10 +82,15 @@ class SkillPopup(QFrame):
         self._list = QListWidget()
         self._list.setObjectName("skillList")
         self._list.setFocusPolicy(Qt.NoFocus)   # 焦点留在输入框
+        # 文本不用省略号截断：宽度足够就完整显示，超出上限则横向滚动查看
+        self._list.setTextElideMode(Qt.ElideNone)
+        self._list.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self._list.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
         self._list.itemClicked.connect(self._on_item_clicked)
         layout.addWidget(self._list)
 
         self._skills: List[Dict[str, Any]] = []
+        self._labels: List[str] = []      # 各条目展示文本（计算内容宽度用）
         self.hide()
 
     # ------------------------------------------------------------ 数据
@@ -99,21 +106,63 @@ class SkillPopup(QFrame):
             desc = str(skill.get("description") or "")
             badge = "[开关] " if skill.get("kind") == "switch" else ""
             label = badge + name + (f"　— {desc[:22]}" if desc else "")
+            self._labels.append(label)
             it = QListWidgetItem(label)
             it.setData(Qt.UserRole, skill)
             it.setToolTip(desc)
             self._list.addItem(it)
         if self._list.count() > 0:
             self._list.setCurrentRow(0)
-        self._list.setFixedHeight(
-            min(self._list.count(), _MAX_VISIBLE) * _ITEM_H + 8)
+        self._resize_to_content()
+
+    def _resize_to_content(self) -> None:
+        """按内容计算弹窗尺寸（修复重叠错乱 / 显示不全 / 点错行）。
+
+        旧实现的问题：
+          * 行高写死 36px，与真实渲染行高（约 31px，随 DPI/字体变化）不符
+            → 列表底部空白、最后一行被裁，视觉与命中区域错位；
+          * 宽度交给 adjustSize()，与最长条目无关（内容 488px 弹窗只有 274px）
+            → 文字被截断显示不全；
+          * 半透明无边框窗口**边显示边改大小**会留下残影（旧一帧的列表叠在新一帧上）
+            → 看起来行与行重叠、点到的行和看到的行不是同一个。
+        """
+        row_h = self._list.sizeHintForRow(0)
+        if row_h <= 0:
+            row_h = _ITEM_H
+        rows = max(1, min(self._list.count(), _MAX_VISIBLE))
+
+        # 内容宽度用字体度量现算：QListView.sizeHintForColumn 在内容远超视口时
+        # 只度量可见行，会得到被截断的假宽度（导致超长条目既不换行也不可滚动）
+        fm = self._list.fontMetrics()
+        content_w = 0
+        for label in self._labels:
+            content_w = max(content_w, fm.horizontalAdvance(label))
+        content_w += 40          # ::item 左右 padding 14×2 + margin 6×2
+        lm = self.layout().contentsMargins()
+        frame_w = lm.left() + lm.right() + 2      # + 左右边框
+        frame_h = lm.top() + lm.bottom() + 2      # + 上下边框
+
+        w = max(_POPUP_MIN_W, min(_POPUP_MAX_W, content_w + frame_w))
+        h = rows * row_h + frame_h
+        # 内容超宽/超行数时滚动条会占掉一点空间，提前补上避免最后一行被裁
+        if content_w + frame_w > _POPUP_MAX_W:
+            h += self._list.horizontalScrollBar().sizeHint().height()
+        if self._list.count() > _MAX_VISIBLE:
+            w += self._list.verticalScrollBar().sizeHint().width()
+            w = min(w, _POPUP_MAX_W + 24)
+
+        size = QSize(w, h)
+        if self.isVisible() and size != self.size():
+            # 关键：改大小前先隐藏一拍（同一事件循环内马上会重新 show），
+            # 避免半透明窗口拉伸残影导致的「重叠 / 点错行」
+            self.hide()
+        self.setFixedSize(size)
 
     def show_at(self, pos: Any) -> None:
         """移动到全局坐标 pos 显示（自动防越界、盖住输入框时上移）。"""
         if self._list.count() == 0:
             self.hide()
             return
-        self.adjustSize()
         screen = QApplication.screenAt(pos) or QApplication.primaryScreen()
         if screen is None:
             self.show()

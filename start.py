@@ -51,6 +51,17 @@ _FALLBACK_DEPS = [
     ("python-docx", ">=", "1.1"),
     ("openpyxl", ">=", "3.1"),
     ("python-pptx", ">=", "0.6"),
+    # RAR 解压（技能包 .rar 导入；缺失时自动回退 7z/WinRAR/tar）
+    ("rarfile", ">=", "4"),
+    # 扫描件 PDF 的视觉识别（PDF 页栅格化 → 视觉模型 OCR；可选，缺失时该能力关闭）
+    ("pypdfium2", ">=", "4"),
+    # 同上，更快的栅格化后端（PyMuPDF；许可为 AGPL-3.0 或商业双授权，按需使用）
+    ("pymupdf", ">=", "1.24"),
+    # 注：上述已覆盖项目全部第三方库（PySide6/chromadb/numpy/openai/httpx/
+    # Pillow/python-dateutil/pydantic + 文档解析五件套 + rarfile +
+    # PDF 栅格化两件套 pypdfium2/pymupdf）。
+    # tkinter（启动器 GUI）为 Python 标准库，Windows 自带，无需 pip 安装。
+    # 核对方法：项目内第三方 import 全集 → 与本清单逐项对照（见 CodeGuide 10 §0）。
 ]
 
 
@@ -190,10 +201,23 @@ def check_python() -> str:
         return f"Python {v.major}.{v.minor}（建议 3.10~3.13，已满足）"
     return f"Python {v.major}.{v.minor}.{v.micro}（建议使用 3.10~3.13）"
 
+
+def launch_direct(args: list) -> int:
+    """直接启动主程序 main.py（透传剩余参数）。"""
+    subprocess.call([sys.executable, str(MAIN)] + list(args), env=utf8_env())
+    return 0
+
+
 # ------------------------------------------------------------------ GUI
 def run_gui() -> int:
-    import tkinter as tk
-    from tkinter import ttk
+    # tkinter 是 Python 标准库（Windows 自带）。个别精简版 Python 可能缺失，
+    # 此时降级为命令行直接启动，避免启动器自身报错崩溃。
+    try:
+        import tkinter as tk
+        from tkinter import ttk
+    except Exception as exc:  # noqa: BLE001
+        print(f"[start] tkinter 不可用（{exc}），回退为直接启动主程序。")
+        return launch_direct([a for a in sys.argv[1:] if not a.startswith("--")])
 
     root = tk.Tk()
     root.title("Celestia AssistantAI - 启动器")
@@ -272,10 +296,7 @@ def main() -> int:
     force_utf8_stdio()
     args = sys.argv[1:]
     if "--direct" in args:
-        subprocess.call([sys.executable, str(MAIN)] +
-                        [a for a in args if a != "--direct"],
-                        env=utf8_env())
-        return 0
+        return launch_direct([a for a in args if a != "--direct"])
     if "--setup" in args:
         print("[start] 检测库版本…")
         bad = []
@@ -294,10 +315,7 @@ def main() -> int:
             for name, target, have, ok in check_deps():
                 print(f"  {'OK ' if ok else '-- '}{name:<20} 要求 {target:<12}"
                       f"已装 {have or '未安装'}")
-        subprocess.call([sys.executable, str(MAIN)] +
-                        [a for a in args if a != "--setup"],
-                        env=utf8_env())
-        return 0
+        return launch_direct([a for a in args if a != "--setup"])
     return run_gui()
 
 

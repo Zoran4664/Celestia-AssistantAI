@@ -1,19 +1,22 @@
 {
   "api": {
-    "provider": "custom",
-    "api_base": "",
+    "provider": "openai",
+    "api_base": "https://api.siliconflow.cn/v1/",
     "api_key": "",
-    "main_model": "gpt-4o",
-    "small_base": "",
+    "main_model": "deepseek-ai/DeepSeek-V3.2",
+    "small_base": "https://api.siliconflow.cn/v1/",
     "small_key": "",
-    "small_model": "gpt-4o-mini",
-    "vision_base": "",
+    "small_model": "deepseek-ai/DeepSeek-V3.2",
+    "small_thinking_off": true,
+    "vision_base": "https://maas.qianwenaiapi.com/compatible-mode/v1",
     "vision_key": "",
-    "vision_model": "gpt-4o",
-    "image_base": "",
+    "vision_model": "qwen3.8-flash",
+    "image_base": "https://maas.qianwenaiapi.com/api/v1/",
     "image_key": "",
-    "image_model": "",
-    "image_dir": "./createimage"
+    "image_model": "qwen-image-3.0",
+    "image_dir": "./createimage",
+    "main_vision": false,
+    "attach_max_chars": 100000
   },
   "paths": {
     "roles": "./roles",
@@ -22,12 +25,13 @@
     "theme": "./theme",
     "history": "./history",
     "data": "./data",
-    "skills": "./skills"
+    "skills": "./skills",
+    "skillspub": "./skillspub"
   },
-  "user_avatar": "",
+  "user_avatar": "./data/user_avatar.png",
   "chat": {
-    "temperature": 0.7,
-    "max_tokens": 3076,
+    "temperature": 0.8,
+    "max_tokens": 12800,
     "stream": true
   },
   "memory": {
@@ -47,35 +51,107 @@
   },
   "pet": {
     "enabled": true,
-    "greeting_interval_min": 5,
+    "greeting_interval_min": 11,
     "sleep_hours": [
       22,
       6
     ],
     "focus_mode": false,
-    "floating_chat": true,
+    "floating_chat": false,
     "zoom_enabled": true
   },
   "ui": {
     "blur_background": true,
-    "random_proactive": true,
+    "random_proactive": false,
+    "roleplay_enabled": false,
+    "roleplay_cards": [
+      "rolepersonal/MLPship",
+      "rolepersonal/user",
+      "roletools/OOC与世界观破限",
+      "roletools/TGbreakV3.0.5-DeepSeek",
+      "roletools/anti-AI-style",
+      "roletools/anti-R18+18G",
+      "roletools/anti-R18G",
+      "style/日式轻小说文风",
+      "world/My Little Pony 世界书"
+    ],
     "window_opacity": 0.92,
     "accent": "#6c8ef5",
-    "theme_file": "\\theme\\test.png",
-    "icon_path": "",
+    "theme_file": "./theme/test.png",
+    "icon_path": "./data/app.ico",
     "transparent_chat": false,
     "user_name": "用户",
     "font_family": "SimSun",
-    "last_role": "Rainbow_Dash",
+    "last_role": "Twilight_Sparkle",
     "last_group": "",
     "last_mode": "单聊",
     "login_time_enabled": false,
     "show_thinking": false,
-    "chat_font_size": 13
+    "skillspub_enabled": true,
+    "auto_diary_enabled": false,
+    "auto_diary_time": "23:00",
+    "chat_font_size": 13,
+    "roleplay_user_persona": "user",
+    "roleplay_ooc_mode": true
   },
   "web": {
+    "enabled": true,
+    "search_base": "https://qianfan.baidubce.com/v2/ai_search/config",
+    "search_key": "",
+    "search_providers": [],
+    "search_fallback": true,
+    "search_rate_limit": true
+  },
+  "cron": {
+    "enabled": true,
+    "check_interval_sec": 60,
+    "default_timeout_min": 20,
+    "job_file": "./data/cron_jobs.json",
+    "runs_dir": "./data/cron_runs"
+  },
+  "heartbeat": {
+    "enabled": true,
+    "interval_min": 30,
+    "watch_dirs": [],
+    "max_active_per_day": 6
+  },
+  "notify": {
+    "enabled": true,
+    "desktop_focus": "always",
+    "idempotency_ttl_min": 10
+  },
+  "pinned": {
+    "enabled": true,
+    "file": "./data/pinned.md"
+  },
+  "dream": {
     "enabled": false,
-    "search_base": "",
-    "search_key": ""
+    "interval_hours": 24
+  },
+  "memory_compile": {
+    "enabled": true,
+    "daily_retention_days": 6,
+    "max_context_tokens": 2000
+  },
+  "search": {
+    "max_results": 30
+  },
+  "skill_bundles": {
+    "file": "./data/skill_bundles.json"
+  },
+  "character_card": {
+    "max_upload_mb": 80,
+    "export_dir": "./data/character_cards"
+  },
+  "file_tools": {
+    "enabled": true,
+    "writable_roots": [
+      "./data",
+      "./dailydata",
+      "./createimage"
+    ],
+    "history_enabled": true,
+    "history_max_days": 30,
+    "history_max_total_mb": 500
   }
 }

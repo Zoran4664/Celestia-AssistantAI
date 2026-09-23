@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.idea/
+.vscode/
+.git/
+.gitignore
+history/chroma/
+utils/logs/
+logs/
+*.log
+.DS_Store

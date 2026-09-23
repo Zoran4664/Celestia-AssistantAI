@@ -1,0 +1,555 @@
+{
+  "updated": "2026-09-22 16:11:57",
+  "count": 28,
+  "skills": [
+    {
+      "name": "信息整理与总结",
+      "folder": "信息整理与总结",
+      "category": "办公",
+      "enabled": true,
+      "summary": "把长文本、聊天记录或杂乱资料整理成高信息密度的要点结论与行动清单。",
+      "keywords": [
+        "整理",
+        "总结",
+        "归纳",
+        "要点",
+        "汇总",
+        "纪要",
+        "提取",
+        "精简",
+        "提炼"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-18 12:44:46",
+      "updated_at": "2026-09-18 12:44:46"
+    },
+    {
+      "name": "文案润色改写",
+      "folder": "文案润色改写",
+      "category": "创作",
+      "enabled": true,
+      "summary": "把草稿或平淡的文字改成更有文采、更清晰、更贴合目标读者与场景的版本。",
+      "keywords": [
+        "润色",
+        "改写",
+        "文案",
+        "修辞",
+        "书面语",
+        "润稿",
+        "优化文字"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-18 12:44:46",
+      "updated_at": "2026-09-18 12:44:46"
+    },
+    {
+      "name": "邮件撰写与回复",
+      "folder": "邮件撰写与回复",
+      "category": "办公",
+      "enabled": true,
+      "summary": "根据要点快速生成结构规范的正式邮件草稿，或对现有邮件进行语气与结构润色。",
+      "keywords": [
+        "邮件",
+        "写信",
+        "回复邮件",
+        "邮件事宜",
+        "商务邮件",
+        "邮件润色"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-18 12:44:46",
+      "updated_at": "2026-09-18 12:44:46"
+    },
+    {
+      "name": "peer-review-2",
+      "folder": "peer-review-2",
+      "category": "导入",
+      "enabled": true,
+      "summary": "Systematic peer review toolkit. Evaluate methodology, statistics, design, reproducibility, ethics, figure integrity, reporting standards, for manuscript and grant review across disciplines.",
+      "keywords": [
+        "peer-review-2",
+        "Systematic",
+        "peer",
+        "review",
+        "toolkit",
+        "Evaluate",
+        "methodology"
+      ],
+      "allow_files": true,
+      "created_at": "2026-09-21 00:02:24",
+      "updated_at": "2026-09-21 00:02:24"
+    },
+    {
+      "name": "scientific-critical-thinking",
+      "folder": "scientific-critical-thinking",
+      "category": "导入",
+      "enabled": true,
+      "summary": "Evaluate research rigor. Assess methodology, experimental design, statistical validity, biases, confounding, evidence quality (GRADE, Cochrane ROB), for critical analysis of scientific claims.",
+      "keywords": [
+        "scientific-critical-thinking",
+        "Evaluate",
+        "research",
+        "rigor",
+        "Assess",
+        "methodology",
+        "experimental"
+      ],
+      "allow_files": true,
+      "created_at": "2026-09-21 00:02:25",
+      "updated_at": "2026-09-21 00:02:25"
+    },
+    {
+      "name": "treatment-plans",
+      "folder": "treatment-plans",
+      "category": "导入",
+      "enabled": true,
+      "summary": "Generate concise (3-4 page), focused medical treatment plans in LaTeX/PDF format for all clinical specialties. Supports general medical treatment, rehabilitation therapy, mental health care, chronic d",
+      "keywords": [
+        "treatment-plans",
+        "Generate",
+        "concise",
+        "page",
+        "focused",
+        "medical",
+        "treatment"
+      ],
+      "allow_files": true,
+      "created_at": "2026-09-21 00:02:25",
+      "updated_at": "2026-09-21 00:02:25"
+    },
+    {
+      "name": "agentdb-vector-search",
+      "folder": "agentdb-vector-search",
+      "category": "导入",
+      "enabled": true,
+      "summary": "用AgentDB实现语义向量搜索，支持智能文档检索、相似度匹配和上下文感知查询，适用于RAG系统、语义搜索引擎等场景。",
+      "keywords": [
+        "agentdb-vector-search",
+        "Implement",
+        "semantic",
+        "vector",
+        "search",
+        "with",
+        "AgentDB"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-21 00:02:24",
+      "updated_at": "2026-09-21 00:25:45"
+    },
+    {
+      "name": "biopython",
+      "folder": "biopython",
+      "category": "导入",
+      "enabled": true,
+      "summary": "Biopython是分子生物学首选Python工具包，适用于PubMed/NCBI查询、序列操作、FASTA/GenBank/FASTQ/PDB解析及BLAST流程。",
+      "keywords": [
+        "biopython",
+        "Primary",
+        "Python",
+        "toolkit",
+        "for",
+        "molecular",
+        "biology"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-21 00:02:24",
+      "updated_at": "2026-09-21 00:25:57"
+    },
+    {
+      "name": "clinicaltrials-database",
+      "folder": "clinicaltrials-database",
+      "category": "导入",
+      "enabled": true,
+      "summary": "通过API v2查询ClinicalTrials.gov，按疾病、药物、地点、状态或阶段检索试验，用NCT ID获取详情并导出数据，适用于临床研究和患者匹配。",
+      "keywords": [
+        "clinicaltrials-database",
+        "Query",
+        "ClinicalTrials",
+        "gov",
+        "via",
+        "API",
+        "Search"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-21 00:02:24",
+      "updated_at": "2026-09-21 00:26:13"
+    },
+    {
+      "name": "clinpgx-database",
+      "folder": "clinpgx-database",
+      "category": "导入",
+      "enabled": true,
+      "summary": "整合药物基因组学数据，支持基因-药物对、CPIC指南、等位基因及药物标签查询，适用于精准用药与临床决策。",
+      "keywords": [
+        "clinpgx-database",
+        "Access",
+        "ClinPGx",
+        "pharmacogenomics",
+        "data",
+        "successor",
+        "PharmGKB"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-21 00:02:24",
+      "updated_at": "2026-09-21 00:26:29"
+    },
+    {
+      "name": "data-storytelling",
+      "folder": "data-storytelling",
+      "category": "导入",
+      "enabled": true,
+      "summary": "将原始数据转化为驱动决策的叙事，适用于高管汇报、季度业务回顾和投资者演示等场景。",
+      "keywords": [
+        "data-storytelling",
+        "Transform",
+        "data",
+        "into",
+        "compelling",
+        "narratives",
+        "using"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-21 00:02:24",
+      "updated_at": "2026-09-21 00:26:38"
+    },
+    {
+      "name": "fda-database",
+      "folder": "fda-database",
+      "category": "导入",
+      "enabled": true,
+      "summary": "通过openFDA查询药品、器械、食品等FDA监管数据，适用于安全监测、召回追踪与法规研究。",
+      "keywords": [
+        "fda-database",
+        "Query",
+        "openFDA",
+        "API",
+        "for",
+        "drugs",
+        "devices"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-21 00:02:24",
+      "updated_at": "2026-09-21 00:26:57"
+    },
+    {
+      "name": "market-research-reports",
+      "folder": "market-research-reports",
+      "category": "导入",
+      "enabled": true,
+      "summary": "生成50页以上麦肯锡、BCG、Gartner风格的市场研究报告，支持专业LaTeX排版与科学可视化，适用于企业战略与咨询场景。",
+      "keywords": [
+        "market-research-reports",
+        "Generate",
+        "comprehensive",
+        "market",
+        "research",
+        "reports",
+        "pages"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-21 00:02:24",
+      "updated_at": "2026-09-21 00:27:02"
+    },
+    {
+      "name": "medchem",
+      "folder": "medchem",
+      "category": "导入",
+      "enabled": true,
+      "summary": "药物化学过滤技能，应用类药性规则、PAINS过滤、结构警报和复杂度指标，用于化合物优先级排序和化合物库筛选。",
+      "keywords": [
+        "medchem",
+        "Medicinal",
+        "chemistry",
+        "filters",
+        "Apply",
+        "drug-likeness",
+        "rules"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-21 00:02:24",
+      "updated_at": "2026-09-21 00:27:08"
+    },
+    {
+      "name": "pdf-processing",
+      "folder": "pdf-processing",
+      "category": "导入",
+      "enabled": true,
+      "summary": "提取PDF文本和表格、填写表单、合并文档，适用于处理PDF文件或涉及表单、文档提取的场景。",
+      "keywords": [
+        "pdf-processing",
+        "Extract",
+        "text",
+        "and",
+        "tables",
+        "from",
+        "PDF"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-21 00:02:24",
+      "updated_at": "2026-09-21 00:27:12"
+    },
+    {
+      "name": "peer-review",
+      "folder": "peer-review",
+      "category": "导入",
+      "enabled": true,
+      "summary": "系统化同行评审工具包，可评估方法学、统计、设计、可重复性、伦理、图像完整性和报告规范，适用于各学科稿件与基金评审。",
+      "keywords": [
+        "peer-review",
+        "Systematic",
+        "peer",
+        "review",
+        "toolkit",
+        "Evaluate",
+        "methodology"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-18 12:44:46",
+      "updated_at": "2026-09-21 00:27:17"
+    },
+    {
+      "name": "pptx",
+      "folder": "pptx",
+      "category": "导入",
+      "enabled": true,
+      "summary": "创建、编辑和分析PPTX演示文稿，适用于新建演示、修改内容及处理版式等场景。",
+      "keywords": [
+        "pptx",
+        "Presentation",
+        "creation",
+        "editing",
+        "and",
+        "analysis",
+        "When"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-21 00:02:25",
+      "updated_at": "2026-09-21 00:27:29"
+    },
+    {
+      "name": "scientific-brainstorming",
+      "folder": "scientific-brainstorming",
+      "category": "导入",
+      "enabled": true,
+      "summary": "科研创意伙伴，助你生成假设、探索跨学科联系、挑战假设、开发方法、识别研究空白，适用于创造性科学问题解决。",
+      "keywords": [
+        "scientific-brainstorming",
+        "Research",
+        "ideation",
+        "partner",
+        "Generate",
+        "hypotheses",
+        "explore"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-21 00:02:25",
+      "updated_at": "2026-09-21 00:27:34"
+    },
+    {
+      "name": "uniprot-database",
+      "folder": "uniprot-database",
+      "category": "导入",
+      "enabled": true,
+      "summary": "通过REST API访问UniProt，支持蛋白质搜索、FASTA获取、ID映射及Swiss-Prot/TrEMBL，适用于Python蛋白质数据库工作流。",
+      "keywords": [
+        "uniprot-database",
+        "Direct",
+        "REST",
+        "API",
+        "access",
+        "UniProt",
+        "Protein"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-21 00:02:25",
+      "updated_at": "2026-09-21 00:27:54"
+    },
+    {
+      "name": "statistical-analysis",
+      "folder": "statistical-analysis",
+      "category": "导入",
+      "enabled": true,
+      "summary": "面向学术研究的统计分析工具包，支持假设检验、回归、相关、贝叶斯统计、功效分析与APA报告。",
+      "keywords": [
+        "statistical-analysis",
+        "Statistical",
+        "analysis",
+        "toolkit",
+        "Hypothesis",
+        "tests",
+        "t-test"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-18 12:44:46",
+      "updated_at": "2026-09-21 00:28:10"
+    },
+    {
+      "name": "tothemoon",
+      "folder": "tothemoon",
+      "category": "天文观测",
+      "enabled": true,
+      "summary": "查询可观测的天象：先取本机 IP 归属地（或用户写的城市），再按「查询观测条件/查询天象/查询专业天象」输出日月出没与月中天、亮度，以及当地一个月内可见天象。",
+      "keywords": [
+        "天象",
+        "观测条件",
+        "晴天钟",
+        "7timer",
+        "月相",
+        "月食",
+        "日食",
+        "流星雨",
+        "超级月亮",
+        "银河之眼",
+        "彗星",
+        "黄道光",
+        "深空天体",
+        "celescan",
+        "观星"
+      ],
+      "allow_files": true,
+      "created_at": "2026-09-21 02:09:50",
+      "updated_at": "2026-09-21 02:33:05"
+    },
+    {
+      "name": "tothestars",
+      "folder": "tothestars",
+      "category": "天文观测",
+      "enabled": true,
+      "summary": "巡天与天文科研：瞬变天体核查（TNS/VSX/ZTF/NOVA + CDS 星图）、VSX 变星查询、FTS 在线解析、SOHO/CCOR 彗星同星判断。",
+      "keywords": [
+        "巡天",
+        "瞬变天体",
+        "超新星",
+        "新星",
+        "TNS",
+        "ZTF",
+        "ALeRCE",
+        "VSX",
+        "变星",
+        "CDS",
+        "FTS",
+        "SOHO",
+        "CCOR",
+        "彗星",
+        "天文科研"
+      ],
+      "allow_files": true,
+      "created_at": "2026-09-21 02:09:50",
+      "updated_at": "2026-09-21 02:33:05"
+    },
+    {
+      "name": "seo-review",
+      "folder": "seo-review",
+      "category": "导入",
+      "enabled": true,
+      "summary": "对33个JavaScript概念页做五步SEO审计，涵盖关键词、页面优化、精选摘要与内链，适用于发布前或优化时。",
+      "keywords": [
+        "seo-review",
+        "Perform",
+        "focused",
+        "SEO",
+        "audit",
+        "JavaScript",
+        "concept"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-21 00:02:25",
+      "updated_at": "2026-09-22 02:56:00"
+    },
+    {
+      "name": "scientific-writing",
+      "folder": "scientific-writing",
+      "category": "导入",
+      "enabled": true,
+      "summary": "用于科研论文写作与投稿，支持IMRAD结构、引用格式、图表及CONSORT/STROBE/PRISMA规范。",
+      "keywords": [
+        "scientific-writing",
+        "Core",
+        "skill",
+        "for",
+        "the",
+        "deep",
+        "research"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-21 00:02:25",
+      "updated_at": "2026-09-22 15:45:23"
+    },
+    {
+      "name": "docs-review",
+      "folder": "docs-review",
+      "category": "导入",
+      "enabled": true,
+      "summary": "审查文档变更是否符合Metabase写作风格指南，适用于检查含文档Markdown文件的拉取请求、文件或差异。",
+      "keywords": [
+        "docs-review",
+        "Review",
+        "documentation",
+        "changes",
+        "for",
+        "compliance",
+        "with"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-21 00:02:24",
+      "updated_at": "2026-09-22 15:45:40"
+    },
+    {
+      "name": "video-downloader",
+      "folder": "video-downloader",
+      "category": "导入",
+      "enabled": true,
+      "summary": "可定制画质与格式下载YouTube视频，适用于用户要求下载、保存或获取YouTube视频的场景。",
+      "keywords": [
+        "video-downloader",
+        "Download",
+        "YouTube",
+        "videos",
+        "with",
+        "customizable",
+        "quality"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-21 00:02:25",
+      "updated_at": "2026-09-22 15:46:40"
+    },
+    {
+      "name": "scientific-schematics",
+      "folder": "scientific-schematics",
+      "category": "导入",
+      "enabled": true,
+      "summary": "用自然语言自动生成出版级科研示意图，并按期刊、会议、论文场景智能评审迭代。",
+      "keywords": [
+        "scientific-schematics",
+        "Create",
+        "publication-quality",
+        "scientific",
+        "diagrams",
+        "using",
+        "Nano"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-21 00:02:25",
+      "updated_at": "2026-09-22 15:46:49"
+    },
+    {
+      "name": "geo-database",
+      "folder": "geo-database",
+      "category": "导入",
+      "enabled": true,
+      "summary": "GEO数据库技能可搜索、检索和下载基因表达数据集，适用于查询表达谱及整合GEO数据到分析流程。",
+      "keywords": [
+        "geo-database",
+        "Access",
+        "NCBI",
+        "GEO",
+        "for",
+        "gene",
+        "expression"
+      ],
+      "allow_files": false,
+      "created_at": "2026-09-21 00:02:24",
+      "updated_at": "2026-09-22 16:11:57"
+    }
+  ]
+}

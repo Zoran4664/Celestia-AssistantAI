@@ -170,6 +170,53 @@ cython_debug/
 # Ruff stuff:
 .ruff_cache/
 
+# ============================================================
+# 项目运行时生成目录/文件（勿提交：含个人记忆库与生成物）
+# ============================================================
+# ChromaDB 向量库 + 会话存档（个人记忆数据）
+history/
+# 日记附件与生成物
+dailydata/
+# 生图输出目录
+createimage/
+# 技能产出目录（技能生成的文件：一个对话一个「日期+时间」项目文件夹）
+skilluserdata/
+# 小说学习存档（`\@novellearn` 把学习总结存成 JSON，含用户阅读内容 → 私密产出）
+novellearn/
+# 运行日志目录：ui_manager 写 log/error.log、utils/logger 写 utils/logs/
+# （文件级已由上面的 *.log 覆盖，这里连目录一起忽略，避免非 .log 的崩溃转储混进来）
+log/
+logs/
+# 第三方角色扮演预设：作者在文件内明确写了「二创/魔改：禁止 · 禁止商用 · 下载后请
+# 在 24h 内删掉」——与公开仓库「向所有人分发」冲突（用户 2026-09-23 决定，方案 A1：
+# 只移出这几个，其余预设保留）。本地仍可自行放入 roleplay/roletools/ 使用。
+roleplay/roletools/No-choice-TGBreak.json
+roleplay/roletools/TGbreakV1.1.0-Gemini.json
+roleplay/roletools/TGbreakV3.0.5-DeepSeek.json
+# 观星晴天钟图缓存（#tothemoon 每次按经纬度下载的 7timer PNG，纯运行时产物）
+data/sky_images/
+# 调试/临时脚本与输出（根目录 _ 开头的探针，勿提交）
+/_*.py
+/_*.txt
+# 常用接口 API 管理器凭据（内嵌各家 KEY，绝不入库）
+data/api_vault.json
+# 密钥护栏的私有规则（可写个人姓名/域名等，勿入库）
+data/.secret_guard.json
+# 临时备份（编辑器/脚本产生）
+*.wipbak
+# Cron 任务运行历史
+data/cron_runs/
+# 角色卡导出包
+data/character_cards/
+data/cron_jobs.json
+data/focus_history.json
+data/focus_summary.json
+data/input_drafts.json
+data/logintime.json
+data/logintime_history.json
+data/skill_bundles.json
+data/pinned.md
+
 # PyPI configuration file
 .pypirc
 

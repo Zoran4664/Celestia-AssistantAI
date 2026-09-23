@@ -1,0 +1,20 @@
+{
+  "project_name": "AntiEmojiConstraintCard",
+  "version": "1.0",
+  "category": "Negative_Constraint_Card",
+  "description": "用于彻底屏蔽、过滤与剔除文本中所有Emoji符号及非标准特殊符号的文本纯净度限制卡。",
+  "rules": {
+    "core_prohibition": {
+      "banned_elements": [
+        "全量Unicode Emoji表情符号（如：😊, 🥺, 😂, 😭, ✨, 🌸, 💢, 💦, 🔥, 💀 等）",
+        "情感修饰符号与爱心符号（如：❤, 💖, 💔, 🖤, ♡, ♥, ❥, 等）",
+        "用于强调语气的非标准装饰性符号（如：★, ☆, ◆, ◇, ✦, ✧ 等）"
+      ]
+    },
+    "text_formatting_hygiene": {
+      "punctuation_standard": "全篇仅允许使用标准规范的中英文标点符号（如：。，、！？“”‘’；：（）——……）",
+      "emotional_expression": "所有角色的喜怒哀乐、语气波动与氛围渲染，必须完全依靠文本本身的词汇、句式、语气词及标点停顿呈现，严禁使用符号代偿情绪"
+    }
+  },
+  "compliance_check_trigger": "在生成文本的每个字符阶段进行前置自检：若检测到任何Emoji，立即清除并替换为纯文本表述。"
+}

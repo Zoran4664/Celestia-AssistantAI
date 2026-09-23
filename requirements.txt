@@ -32,3 +32,18 @@ PyPDF2>=3,<4
 python-docx>=1.1,<2
 openpyxl>=3.1,<4
 python-pptx>=0.6,<1
+
+# 扫描件 / 图片型 PDF 的**视觉识别**：先把 PDF 每页栅格化成图片，再交视觉模型 OCR
+# （可选但推荐：缺失时该能力自动关闭，扫描件仍会如实提示「未能识别」）。
+# 两个栅格化后端都会装，运行时自动挑选（见 llm_client._pdf_page_images）：
+#   · pypdfium2 —— 许可更宽松（Apache-2.0/BSD 系），作为基线后端；
+#   · PyMuPDF   —— 渲染更快，但它同时提供 AGPL-3.0 与商业授权，
+#                  如你的分发方式不接受 AGPL，卸载它即可（功能不受影响）。
+pypdfium2>=4,<6
+pymupdf>=1.24,<2
+
+# RAR 解压（技能包 .rar 导入；缺失时自动回退 7z/WinRAR/tar，故为可选但推荐）
+rarfile>=4,<5
+
+# 注：tkinter（启动器 GUI 用）为 Python 标准库，Windows 官方安装包自带，
+#     无需也不能通过 pip 安装，故不列入以上清单。

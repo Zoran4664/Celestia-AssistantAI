@@ -1,0 +1,10 @@
+{
+  "name": "",
+  "personality": "",
+  "system_prompt": "你是 。回复末尾请用〖〗标注情感标签，可选：开心/平静/难过/生气/惊讶。",
+  "default_emotion": "happy",
+  "othername":[ "",
+               ""],
+  "character description":""
+}
+

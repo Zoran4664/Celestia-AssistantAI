@@ -1,27 +1,16 @@
 ## 一、项目介绍
-<img width="3212" height="734" alt="Celestia AssistantAI" src="https://github.com/user-attachments/assets/cd37bf67-8cca-46e8-9a5f-f6e1dc0d9841" />
 
 Celestia AssistantAI是一个基于 Python + PySide6 + ChromaDB 的多模态大模型角色对话 Agent 桌面（花瓶）应用，使用了调用deepseek V4的Cline与DSH（大烧货）完成。页面风格参考了常见LLM网页端的布局。未来的目标是实现日常办公学习的辅助以及文字聊天。
 对话方面本项目使用了chromaDB等实现了三级记忆的管理，确保在不遗忘关键记忆的同时能以最大性价比得到个性化的体验（灵感和思路参考了B站Play0编写的昔莲Cyrene-Agent，德谬歌在发力嗯）。
-
 本项目通过提示词实现了在日常对话时角色形象会随对话内容的情绪改变（目前内部尚未完成设计，只在测试性实现思路。目前项目内置4位角色（Twilight Sparkle, Rainbow Dash, Fluttershy, Applejack）和5种情绪（平静、震惊、伤心、生气、开心）），这部分未来预计会持续丰富，现演示角色的角色图片为ZoinkscoobFurryNoobAI_V10配合基于Gemini banana模型风格的Lora使用秋叶WebUI与comfyUI生成。其他图片素材均没有仔细绘制。
-
 同时本应用内置正在持续完善的桌面桌宠功能（目前使用gif和图片切换实现了该部分功能，效果不尽人意，未来再完善了）。
-
 日常聊天支持多角色对话（还在优化，角色切换的实现效果有时略抽风）和随机主动对话，同时支持加载与管理skill（现在里面的就是我占位用的，后续要改）能够协助办公学习。
-
-由于梁圣最近因DeepseekV4全面涨价评级降低为梁子，所以为了节省API费用，以及便宜的鲸鱼娘暂未睁眼，以及部分绘图需求，目前模型支持设置主模型/整理记忆用的小模型与MoE多模态模型的分别配置，以及skill的特殊使用需求独立模型，以及支持ollama本地部署模型和硅基流动等聚合站点的API（如因聚合站点的免费账户TPM/RPM存在限制，因此增加了较为严格的打断机制以免影响体验）。
-
+由于梁圣最近因DeepseekV4全面涨价评级降低为梁子，所以为了节省API费用，以及便宜的鲸鱼娘暂未睁眼，以及部分绘图需求，目前模型支持设置主模型/整理记忆用的小模型与MoE多模态模型的分别配置，以及skill的特殊使用需求独立模型，以及支持ollama本地部署模型和硅基流动等聚合站点的API（如因聚合站点的免费账户TPM/RPM存在限制，因此增加了较为严格的打断机制以免影响体验）
 桌宠功能包括了休息提醒、倒计时提醒等实用工具，以及专为网课增加的专注助手（选择页面，若页面被切入后台则进行提示提醒与鞭策）。同时本应用会记录应用打开时间、使用情况等信息，后期在提示对话内容也会更加的个性化。
-
 本项目支持配置Search API(如谷歌/百度等)，能够打通联网搜索功能，并支持思维链显示（需模型原生支持，否则为伪思维链）。
-
 本项目也内置了简单的日记本与记录工具，通过记录，角色也能够越来越智能。
-
 本项目也支持读取json格式的标准对话文本数据，你也可以导入扩增后/提取后的对话进行微调。
-
 目前正在调试Role Play功能，该功能拟实现达到简易酒馆的体验效果，并且可以配置工具功能（例如切换语言风格与对话任务，甚至你可以加入破甲指令！）。
-<img width="1440" height="720" alt="intro" src="https://github.com/user-attachments/assets/4a4d916a-bccc-4c82-b35d-2545c92511e0" />
 
 ---
 
@@ -59,7 +48,33 @@ V0.2.4
 
 V0.2.5
 模型优化了主动设置的遗忘策略。
-<img width="3038" height="1408" alt="SourcecodeGodLaunch" src="https://github.com/user-attachments/assets/a279c550-2550-44cc-8cc4-d2feec077d1f" />
+
+V0.3.0
+合并 V2 开发版改动（在不改变既有 V1 使用方式与默认配置的前提下新增能力）：
+
+- **记忆体系**：记忆传送带 `memory_compile.py`（today → daily → week → longterm）、
+  周期记忆整合 `memory_dream.py`、固定记忆 `pinned_memory.py`（`data/pinned.md` 常驻提示词）、
+  会话检索 `session_search.py`。
+- **记忆隔离**：`memory_pipeline.py` 新增 `mode` 命名空间，角色扮演记忆与日常对话记忆
+  严格分开（旧数据无 `mode` 字段按 `normal` 处理，完全兼容）；新增角色扮演记忆遗忘。
+- **定时与主动关怀**：通用 Cron 引擎 `cron_manager.py` 接管记忆清理定时器，
+  心跳巡检 `heartbeat.py`（默认关闭）、统一通知服务 `notify_service.py`、
+  角色自动写日记 `auto_diary.py`。
+- **技能体系**：skill库 `skillspub/` + `skillspub_core.py` / `skillspub_manager.py`、
+  技能包 `skill_bundles.py`、技能安装 `skill_install.py`、技能评测 `skill_eval.py`、
+  角色卡打包 `character_card.py`。
+- **技能导入与产出**：skill库管理器新增「导入 skills」（`.zip` / `.rar` / 直接 `.md`，
+  技能名取不含后缀的文件名；无介绍时调用小模型总结，英文技能输出中英双语）
+  `skill_import.py`；导入时若技能需要创建文件会询问是否允许，允许后执行技能生成的
+  文件写入 `skilluserdata/<日期+时间>/`（一个对话一个项目文件夹，可用指令
+  `\@project 新项目名` 改名；附件栏「文件夹」也可另选工作文件夹）`skill_userdata.py`。
+- **工具与体验**：文件读写（带版本历史）`file_tools.py` + 路径沙箱 `utils/path_guard.py`、
+  媒体查看器 `media_viewer.py`、日程/提醒写入前「建议-确认」、联网搜索多引擎
+  fallback（V2-D5）、逻辑日 `utils/logical_time.py`。
+- **架构**：`signal_bus.py` 新增 request/handle 请求-响应能力注册表与 V2 信号；
+  `utils/async_worker.py` 新增 `spawn_worker()` 保活引用（修复 QThread 被 GC 回收导致的闪退）；
+  `start.py` 在 tkinter 缺失时自动降级为直接启动。
+- **角色扮演**：新增 `roleplay/` 子包（世界书 / 文风 / 角色关系 / 反 AI 味等提示词工具）。
 
 ---
 
@@ -72,42 +87,77 @@ V0.2.5
 ├── config_loader.py           # 配置单例（默认值合并/路径解析/环境变量回退）
 ├── signal_bus.py              # 全局信号总线
 ├── llm_client.py              # OpenAI 兼容客户端池 + LLMWorker(QThread)
-├── memory_pipeline.py         # 三级记忆管线（短期/长期/重要）
+├── memory_pipeline.py         # 三级记忆管线（短期/长期/重要 + 日常/角色扮演 mode 隔离）
+├── memory_compile.py          # 记忆传送带（today → daily → week → longterm）
+├── memory_dream.py            # 周期性记忆整合（Dream，默认关闭）
+├── pinned_memory.py           # 固定记忆（data/pinned.md，常驻系统提示词）
+├── session_search.py          # 历史会话检索
+├── cron_manager.py            # 通用 Cron 定时引擎（记忆清理/自动日记/Dream）
+├── heartbeat.py               # 心跳巡检（桌宠主动关怀，默认关闭）
+├── notify_service.py          # 统一通知服务（去重 + 弹窗时机）
+├── auto_diary.py              # 角色自动写日记（每天固定时间）
+├── character_card.py          # 角色卡打包/导入导出
+├── file_tools.py              # 文件读写工具（含版本历史快照）
+├── media_viewer.py            # 图片/媒体查看器
+├── skill_bundles.py           # 技能包（批量启用一组技能）
+├── skill_install.py           # 技能安装（导入外部 SKILL.md）
+├── skill_eval.py              # 技能效果评测
+├── skillspub_core.py          # skill库核心（解析/匹配/上下文注入）
+├── skillspub_manager.py       # skill库管理窗口（含「导入 skills」）
+├── skill_import.py            # 技能包导入（.zip / .rar / .md → skillspub）
+├── skill_userdata.py          # 技能产出目录（一个对话一个「日期+时间」项目文件夹）
 ├── role_manager.py            # 角色库/群聊解析/情感归一化/立绘路径
 ├── ui_manager.py              # 主对话界面（HTML5 响应式）
 ├── focus_assistant.py         # 专注助手（先设置专注时间→置顶倒计时→角色语气鼓励）
 ├── skill_manager.py           # 技能管理器（\@ 技能目录/详情查询/上下文构建）
-8├── skill_popup.py             # \@ 技能唤醒弹窗（纯白不透明底，键盘导航）
+├── skill_popup.py             # \@ 技能唤醒弹窗（纯白不透明底，键盘导航）
 ├── skilltools.py              # 技能工具管理器（Windows 注册表风格窗口）
 ├── pet_manager.py             # 桌面宠物引擎（渐隐过渡状态机）
 ├── requirements.txt           # 依赖清单
 ├── Dockerfile / docker-compose.yml / .dockerignore
 ├── README.md                  # 本文档
-├── roles\                     # ★ 角色卡目录
+├── roles\                     # · 角色卡目录
 │   ├── group.json             #   群聊组预设（组名 → 成员角色名列表）
 │   └── 默认助手\
 │       ├── roles.json         #   角色卡（名字/性格/系统提示/情感列表）
 │       └── emotion.json       #   情绪类型 → 关键词映射
-├── roles_img\                 # ★ 角色立绘目录
+├── roles_img\                 # · 角色立绘目录
 │   └── 默认助手\
 │       ├── 默认助手-.png       #   默认立绘（name-.png）
 │       └── 默认助手-happy.png  #   情感立绘（name_-emotion_.png）
-├── theme\                     # ★ 背景模板图片（default.png 等）
-├── roles_desktop\             # ★ 桌宠动图
+├── theme\                     # · 背景模板图片（default.png 等）
+├── roles_desktop\             # · 桌宠动图
 │   └── 默认助手\
 │       ├── 默认助手-standing.gif / -run / -say1 / -say2 / -hello / -sleep / -work（目前添加的部分例子）
-├── history\                   # ★ 记忆与对话存档
+├── history\                   # · 记忆与对话存档
 │   ├── chroma\                #   ChromaDB 向量库（长期/重要记忆）
 │   └── conversations\         #   短期对话 talk_<key>.json + 会话 session_*.json
 ├── data\
-│   ├── config.json            # 系统配置（API/路径/记忆/桌宠/UI）
+│   ├── config.json            # 系统配置（API/路径/记忆/桌宠/UI + cron/heartbeat/notify 等 V2 段）
 │   └── role_abbr.json         # 角色缩写映射（如 Rainbow_Dash → RD）
 ├── skills\                    # 技能数据（tools_list.json / skilltools_information.json）
-├── utils\                     # 日志 / QThread 任务基类
+├── skillspub\                 # skill库（catalog.json + 每技能一个文件夹/SKILL.md）
+├── roleplay\                  # 角色扮演子包（世界书/文风/角色关系/提示词工具）
+│   ├── roleplaytool.py        #   角色扮演管理器与工具窗口
+│   ├── rolemanger\world\      #   世界书设定卡
+│   ├── rolemanger\style\      #   文风设定卡
+│   ├── rolepersonal\          #   角色关系设定卡
+│   └── roletools\             #   提示词工具卡（反 AI 味、去 emoji 等）
+├── utils\                     # 日志 / QThread 任务基类 / 逻辑日 / 路径沙箱
+├── history_guide\V2\          # V2 改动说明与功能清单（开发文档）
+├── 0-8set.md / groupset.md / helpset.md / dailymanger.md
+├── skillspubset.md / toolsset.md   # 分项使用说明文档
+├── secret_guard.py                 # 密钥体检护栏（提交/上传前扫密钥与隐私特征）
 └── tools\
-    ├── generate_placeholder_assets.py   # 占位立绘/动图/主题生成器
-    └── smoke_test.py                    # 无头冒烟测试
+    ├── fix_pet_gifs.py                  # 修复过小的桌宠 GIF（重生成 say1/say2 动画）
+    └── generate_placeholder_assets.py   # 占位立绘/动图/主题生成器
 ```
+
+> **提交前自检（防密钥泄漏）**：仓库自带 `.githooks/pre-commit` 钩子 —— 若暂存内容里出现
+> 真实 API KEY，提交会被**阻止**（占位符可 `SKIP_SECRET_GUARD=1 git commit ...` 绕过）。
+> 手动体检：`python -X utf8 secret_guard.py --all`；交付/上传前一键清理：
+> `python -X utf8 privacy_clean.py --yes`（清空 KEY 与个人数据后自动复查）。
+> 协作者启用钩子：`git config core.hooksPath .githooks`。
 ---
 
 ## 四、快速开始（使用方法）
@@ -117,22 +167,19 @@ V0.2.5
 如果没有环境请去https://python.org下载（不要用百度搜永久免费版python！）
 
 # 4.2 安装环境依赖
-安装相关的库可以点击start.py安装，也可以直接使用pip install指令
+安装相关的库
+可以点击start.py安装，也可以直接使用pip install指令
 pip install -r 路径/requirements.txt
-
 注：如果速度太慢可以考虑切换国内源（清华/阿里云/中科大/华为云，推荐清华源）
-指令形式参考pip install ChromaDB -i https://pypi.tuna.tsinghua.edu.cn/simple/
+指令形式参考
+pip install ChromaDB -i https://pypi.tuna.tsinghua.edu.cn/simple/
 
 
 # 4.3 配置模型服务
 在启动后，可以进入设置界面配置LLM APIKey。
-
 建议主模型选择一个具有一个比较贵的高质量长上下文的模型（DeepSeek V4/Gemini/gpt等等）,提取记忆用的小模型可以配置一些便宜的节省经费（例如：Qwen3 7B/Qwen/Qwen3.5-35B-A3B）。
-
 多模态用于阅读文档图片等，这个API必须原生支持多模态MoE，国内的Qwen就是原生支持的，歌且各种微调的版本比较多，建议去中转站。
-
 生图API必须模型支持图片生成功能，若生成图片则调用该API。
-
 特殊技能的独立API可以在设置-技能工具管理器中单独设置，需要\@开启才可以调用。
 
 ## 五、页面与功能
@@ -249,4 +296,3 @@ pip install -r 路径/requirements.txt
 | 桌宠背景不透明 | 确认 `WA_TranslucentBackground` + `FramelessWindowHint`；个别驱动 `--no-gpu` |
 | LLM 无响应 | 检查 `data/config.json` api 段 / 环境变量；查看 `logs/app.log` |
 | 记忆未入库 | 确认小模型配置有效、`history/chroma` 目录可写 |
-

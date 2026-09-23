@@ -142,6 +142,8 @@ class DesktopPet(QWidget):
         self._focus_last_warn = 0.0
         self._focus_last_active = 0.0
         self._focus_target_title = ""
+        #: 专注提醒是否已「武装」：回到目标窗口后重新武装，下次离开立刻提醒
+        self._focus_warn_armed = True
         self._floating_on = bool(self._cfg.get("pet", "floating_chat", default=False))
         self._mini_chat: Optional[MiniChatWindow] = None
         self._mini_chat_closed = False   # 用户关闭小窗后不再自动弹出，直到鼠标离开再进入
@@ -166,6 +168,8 @@ class DesktopPet(QWidget):
         self._bus.role_switched.connect(self._on_role_switched)
         # 群聊：最后发言角色切换 → 桌宠显示为发送最后一条消息的角色（需求 2）
         self._bus.speaker_switched.connect(self._on_role_switched)
+        # V2-B2：心跳巡检发现变化 → 以角色语气异步生成主动关怀（不阻塞、不双显示）
+        self._bus.heartbeat_care_requested.connect(self._on_heartbeat_care)
         self.set_state("standing")
 
     # ------------------------------------------------------------ UI
@@ -414,21 +418,45 @@ class DesktopPet(QWidget):
         }
 
     def _add_schedule(self) -> None:
-        """设置日程：一页填写时间 + 日程工作 + 每日循环（⑫）。"""
+        """设置日程：一页填写时间 + 日程工作 + 每日循环（⑫）。
+
+        V2-B4：写入前先「建议-确认」（防止误触 / 误填）。
+        """
         data = self._ask_task(
             "设置日程", "日程工作（例如：打开计算器 / 提醒我喝水）：")
         if not data:
+            return
+        if not self._confirm_task("日程", data):
             return
         self._reminders.append({"kind": "schedule", **data})
         self._show_alert("日程", f"已设置日程：{data['time_str']} · {data['text'][:30]}")
 
     def _add_reminder(self) -> None:
-        """设置提醒：一页填写时间 + 内容（120 字内）+ 每日循环（⑫）。"""
+        """设置提醒：一页填写时间 + 内容（120 字内）+ 每日循环（⑫）。
+
+        V2-B4：写入前先「建议-确认」。
+        """
         data = self._ask_task("设置提醒", "提醒内容（120 字内）：")
         if not data:
             return
+        if not self._confirm_task("提醒", data):
+            return
         self._reminders.append({"kind": "reminder", **data})
         self._show_alert("提醒", f"已添加提醒：{data['time_str']} · {data['text'][:30]}")
+
+    def _confirm_task(self, kind: str, data: Dict[str, Any]) -> bool:
+        """V2-B4：添加日程 / 提醒前的「建议-确认」对话框。"""
+        try:
+            from utils.styled_msg import styled_confirm
+        except Exception:  # noqa: BLE001
+            return True
+        return bool(styled_confirm(
+            self, f"确认{kind}",
+            f"将{'设置日程' if kind == '日程' else '添加提醒'}：\n"
+            f"时间：{data.get('time_str', '')}\n"
+            f"内容：{str(data.get('text', ''))[:60]}\n"
+            f"{'（每日循环）' if data.get('loop') else ''}\n\n确认添加？",
+            ok_text="确认添加"))
 
 
     # ------------------------------------------------------------ 定时器
@@ -621,9 +649,10 @@ class DesktopPet(QWidget):
         if sel is None or not sel.text().strip():
             return
         self._focus_target_title = sel.text().strip()
-        # 立即生效：首次最小化就提示（不等 5 分钟节流）
-        self._focus_last_warn = time.time() - 301
-        self._focus_last_active = 0.0
+        # 立即生效：首次最小化就提示（不等节流）
+        self._focus_last_warn = 0.0
+        self._focus_last_active = time.time()
+        self._focus_warn_armed = True
         self._show_alert("专注模式", f"专注模式已开启：目标「{self._focus_target_title[:20]}」")
         # 同样的功能：专注助手倒计时窗也一并启动（先设置时间 → 悬浮倒计时）
         self._open_focus_assistant()
@@ -683,10 +712,20 @@ class DesktopPet(QWidget):
                 pass
 
     def _show_focus_encouragement(self, text: str) -> None:
-        clean = self._roles.strip_emotion_tags(text) if text else "回到任务上吧，我陪着你！"
+        clean = self._roles.strip_emotion_tags(text or "").strip()
         self.set_state("angry", duration_ms=4000)
         # 需求：专注模式弹白色圆角卡片（AlertPopup）展示提醒，不再用无底框气泡
-        self._show_alert("专注提醒", clean)
+        # 需求（用户 2026-09-22「小窗后不弹专注失败提醒」）：
+        # 立即弹的那条兜底卡片已在 _check_focus 里显示；角色文案回来后
+        # **原地刷新同一条卡片**，不再叠一条新弹窗。
+        popup = getattr(self, "_alert_popup", None)
+        if clean and popup is not None and popup.isVisible():
+            try:
+                popup.set_text(clean)
+                return
+            except Exception:  # noqa: BLE001
+                pass
+        self._show_alert("专注提醒", clean or self.FOCUS_FALLBACK_TEXT)
 
     def _on_greeting_tick(self) -> None:
         if not self._greeting_on:
@@ -723,16 +762,41 @@ class DesktopPet(QWidget):
                 "语气要符合角色设定，不超过 60 字。",
                 on_done=lambda t: self._show_alert("休息提醒", t or fallback))
 
+    #: 专注提醒的兜底文案（角色文案由 LLM 异步生成，需数秒；先用它立即提醒）
+    FOCUS_FALLBACK_TEXT = "回到任务上吧，我在这儿陪着你！"
+    #: 同一轮持续离开时的最小提醒间隔（秒）——防每秒刷屏
+    FOCUS_WARN_COOLDOWN = 60.0
+
     def _check_focus(self) -> None:
-        """专注模式：目标任务窗口被最小化/关闭时，按角色性格输出鼓励（⑭）。"""
+        """专注模式：目标任务窗口被最小化/关闭时，按角色性格输出鼓励（⑭）。
+
+        修复（用户 2026-09-22「选了窗口，最小化后不弹专注提醒」）：
+        1. 旧实现只在 `now - _focus_last_warn > 300` 时才提醒，且**从不复位**——
+           第一次提醒后 5 分钟内再最小化都不会有任何反应，用户感知就是「不提醒」。
+           现在回到目标窗口会**重新武装**（`_focus_warn_armed`），下次离开立刻提醒，
+           持续离开时按 `FOCUS_WARN_COOLDOWN` 限流。
+        2. 旧实现要等 LLM 生成角色文案（数秒）才弹卡片——用户往往已经切回窗口，
+           看起来像「从来没弹过」。现在**先立刻弹兜底卡片**，角色文案回来原地刷新。
+        """
         if not getattr(self, "_focus_target_title", ""):
             return
-        if not self._target_minimized():
-            return
         now = time.time()
-        if now - self._focus_last_warn > 300:
-            self._focus_last_warn = now
-            self._generate_focus_encouragement()
+        if not self._target_minimized():
+            # 回到目标窗口：解除节流，下次离开可以立刻提醒
+            if not getattr(self, "_focus_warn_armed", True):
+                self._focus_warn_armed = True
+            self._focus_last_active = now
+            return
+        if not getattr(self, "_focus_warn_armed", True):
+            return
+        if now - self._focus_last_warn < self.FOCUS_WARN_COOLDOWN:
+            return
+        self._focus_last_warn = now
+        self._focus_warn_armed = False
+        # 先立即提醒（不等 LLM），再异步生成角色化文案原地刷新
+        self.set_state("angry", duration_ms=4000)
+        self._show_alert("专注提醒", self.FOCUS_FALLBACK_TEXT)
+        self._generate_focus_encouragement()
 
     def _check_reminders(self) -> None:
         """按时间到点触发日程/提醒（时间戳比较，避免秒级匹配遗漏）。
@@ -836,6 +900,23 @@ class DesktopPet(QWidget):
         popup.move(self.x() + 10, max(0, self.y() - popup.height() - 8))
         popup.show()
         self._alert_popup = popup
+
+    # ------------------------------------------------------------ V2: 心跳关怀
+    def _on_heartbeat_care(self, hint: str) -> None:
+        """heartbeat_care_requested 槽：以当前角色语气异步生成一句主动关怀并展示。"""
+        scene = ("检测到你的工作区有变化，请以你的性格对用户说一句简短、温暖的"
+                 "主动关怀（不超过 40 字），用【】标注情感。")
+        self._generate_role_message(
+            scene, hint,
+            lambda text: self._show_heartbeat_care(text, hint),
+            fallback=f"看到工作区有变化了（{hint}）")
+
+    def _show_heartbeat_care(self, text: str, hint: str) -> None:
+        """展示心跳关怀：LLM 结果为空时回退 hint 提示。"""
+        if text and text.strip():
+            self._show_alert("桌宠关怀", text)
+        else:
+            self._show_alert("桌宠关怀", f"看到工作区有变化了（{hint}）")
 
 
     # ------------------------------------------------------------ 拖拽/悬浮
@@ -1127,7 +1208,12 @@ class MiniChatWindow(QWidget):
         if not messages:
             self._bubble.setText("出错：无法构建对话消息")
             return
-        self._worker = LLMWorker(messages, kind="main", stream=True, max_tokens=200)
+        # 修复（2026-09-22 用户反馈「悬浮对话第一轮正常、第二轮不显示输出」）：
+        # 旧值 max_tokens=200 对**推理模型**（deepseek-flash 等）太小 —— 实测
+        # reasoning 就要 200~650 tokens，200 预算全被推理吃掉，
+        # finish_reason=length 且 content 为空（轮1 侥幸短推理成功、轮2 起必空）。
+        # 这里抬到 1200：足够「推理 + 100 字正文」。
+        self._worker = LLMWorker(messages, kind="main", stream=True, max_tokens=1200)
         self._worker.stream_chunk.connect(self._on_stream)
         self._worker.request_finished.connect(self._on_done)
         self._worker.request_error.connect(
@@ -1181,7 +1267,10 @@ class MiniChatWindow(QWidget):
 
     def _on_done(self, reply: str) -> None:
         # 不截断：API 已限制 100 字，仅移除可能的情绪标签（需求 3）
-        clean = self._roles.strip_emotion_tags(reply)
+        clean = self._roles.strip_emotion_tags(reply or "").strip()
+        if not clean:
+            # 修复（2026-09-22）：模型返回空正文时不能把气泡清空（表现为「没有输出」）
+            clean = "……（我这边一时没接上话，你再说一次好吗？）"
         self._bubble.setText(clean)
         self._memory.archive_after("", clean, self._role, None)
         self._done = True   # 完成标记：停止后续流式刷新（避免清空气泡/切回 say2）
@@ -1261,6 +1350,14 @@ class AlertPopup(QWidget):
         body.setWordWrap(True)
         body.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         layout.addWidget(body, 1)
+        self._body = body
+
+    def set_text(self, text: str) -> None:
+        """原地刷新卡片正文（专注提醒：先弹兜底文案，角色文案回来再替换）。"""
+        try:
+            self._body.setText(str(text or ""))
+        except Exception:  # noqa: BLE001
+            pass
 
     def paintEvent(self, event: Any) -> None:  # noqa: D102
         """手工绘制白色圆角卡片底，保证半透明窗口也能稳定显示底框。"""

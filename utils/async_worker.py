@@ -46,3 +46,41 @@ class AsyncWorker(QThread):
             self.succeeded.emit(result)
         except Exception as exc:  # noqa: BLE001 - 兜底捕获，保证线程正常退出
             self.failed.emit(f"{type(exc).__name__}: {exc}")
+
+
+# ---------------------------------------------------------------- 引用保活
+# 教训（V2 实测闪退）：AsyncWorker 若只作局部变量，start() 后函数返回即被
+# Python GC 回收，而 QThread 仍在运行 → "QThread: Destroyed while thread is
+# still running" 崩溃（对话 / 记忆整合偶发闪退的根因）。
+# spawn_worker 持有引用直到线程结束，杜绝该崩溃。
+_KEEP_ALIVE: set = set()
+
+
+def spawn_worker(task: Callable[..., Any], *args: Any,
+                 on_done: Any = None, on_fail: Any = None,
+                 **kwargs: Any) -> AsyncWorker:
+    """创建并启动 AsyncWorker，并保活引用直到线程结束。
+
+    :param task: 子线程执行的函数
+    :param on_done: 成功后回调(result)（在主线程执行）
+    :param on_fail: 失败后回调(msg)（在主线程执行）
+    :return: worker（调用方也可自行保存引用）
+    """
+    worker = AsyncWorker(task, *args, **kwargs)
+
+    def _finish(result: Any) -> None:
+        _KEEP_ALIVE.discard(worker)
+        if on_done is not None:
+            on_done(result)
+
+    def _fail(msg: str) -> None:
+        _KEEP_ALIVE.discard(worker)
+        if on_fail is not None:
+            on_fail(msg)
+
+    worker.succeeded.connect(_finish)
+    worker.failed.connect(_fail)
+    worker.finished.connect(lambda: _KEEP_ALIVE.discard(worker))
+    _KEEP_ALIVE.add(worker)
+    worker.start()
+    return worker

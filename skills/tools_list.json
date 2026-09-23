@@ -1,7 +1,30 @@
 {
-  "updated": "2026-08-11 21:55:41",
-  "count": 17,
+  "updated": "2026-09-22 16:11:29",
+  "count": 26,
   "skills": [
+    {
+      "name": "skill库Skillspub",
+      "trigger": "skillspub",
+      "kind": "switch",
+      "aliases": [
+        "技能广场",
+        "skillspub",
+        "公共技能库"
+      ],
+      "category": "开关",
+      "enabled": true
+    },
+    {
+      "name": "修改文件",
+      "trigger": "edit",
+      "kind": "skill",
+      "aliases": [
+        "改文件",
+        "替换"
+      ],
+      "category": "工具",
+      "enabled": true
+    },
     {
       "name": "健康咨询",
       "trigger": "health",
@@ -22,6 +45,17 @@
         "代码",
         "编程",
         "python"
+      ],
+      "category": "工具",
+      "enabled": true
+    },
+    {
+      "name": "写入文件",
+      "trigger": "write",
+      "kind": "skill",
+      "aliases": [
+        "写文件",
+        "保存文件"
       ],
       "category": "工具",
       "enabled": true
@@ -58,6 +92,45 @@
         "医学研究"
       ],
       "category": "科研",
+      "enabled": true
+    },
+    {
+      "name": "天气查询",
+      "trigger": "weather",
+      "kind": "skill",
+      "aliases": [
+        "天气",
+        "weather",
+        "天气预报",
+        "查天气"
+      ],
+      "category": "生活",
+      "enabled": true
+    },
+    {
+      "name": "小说学习",
+      "trigger": "novellearn",
+      "kind": "skill",
+      "aliases": [
+        "小说学习",
+        "novellearn",
+        "小说总结",
+        "学小说"
+      ],
+      "category": "创作",
+      "enabled": true
+    },
+    {
+      "name": "小马网站检测",
+      "trigger": "ponywebsite",
+      "kind": "skill",
+      "aliases": [
+        "网站检测",
+        "ponywebsite",
+        "网站延迟",
+        "小马网站"
+      ],
+      "category": "工具",
       "enabled": true
     },
     {
@@ -156,8 +229,7 @@
         "插画"
       ],
       "category": "创作",
-      "enabled": true,
-      "image_gen": true
+      "enabled": true
     },
     {
       "name": "翻译",
@@ -185,6 +257,18 @@
       "network_enabled": true
     },
     {
+      "name": "自动技能AutoSkills",
+      "trigger": "autoskills",
+      "kind": "switch",
+      "aliases": [
+        "自动技能",
+        "自动调用",
+        "autoskills"
+      ],
+      "category": "开关",
+      "enabled": true
+    },
+    {
       "name": "计算",
       "trigger": "calc",
       "kind": "skill",
@@ -206,6 +290,30 @@
         "记忆训练"
       ],
       "category": "记忆",
+      "enabled": true
+    },
+    {
+      "name": "读取文件",
+      "trigger": "read",
+      "kind": "skill",
+      "aliases": [
+        "读文件",
+        "读取"
+      ],
+      "category": "工具",
+      "enabled": true
+    },
+    {
+      "name": "饮食热量",
+      "trigger": "calorie",
+      "kind": "skill",
+      "aliases": [
+        "热量",
+        "卡路里",
+        "calorie",
+        "饮食记录"
+      ],
+      "category": "生活",
       "enabled": true
     }
   ]

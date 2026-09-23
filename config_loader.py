@@ -36,6 +36,10 @@ DEFAULTS: Dict[str, Any] = {
         "small_base": "",
         "small_key": "",
         "small_model": "gpt-4o-mini",
+        # 小模型（工具类非流式调用）是否优先关闭「思考/推理」模式。
+        # 思考型模型会把 max_tokens 预算全耗在 reasoning 上 → 正文为空，
+        # 记忆降噪/提炼、群聊判定、技能审查等全部静默降级（表现为小模型调不动）。
+        "small_thinking_off": True,
         "vision_base": "",
         "vision_key": "",
         "vision_model": "gpt-4o",
@@ -52,6 +56,7 @@ DEFAULTS: Dict[str, Any] = {
         "history": "./history",
         "data": "./data",
         "skills": "./skills",
+        "skillspub": "./skillspub",
     },
     "user_avatar": "./data/user_avatar.png",
     "chat": {"temperature": 0.7, "max_tokens": 2048, "stream": True},
@@ -82,6 +87,10 @@ DEFAULTS: Dict[str, Any] = {
     "ui": {
         "blur_background": False,
         "random_proactive": False,
+        # 角色扮演：主界面「开启角色扮演」开关 + 设置面板保存的勾选设定卡列表
+        # 卡片元素格式："类别/卡片名"，如 "world/小马国"、"roletools/nextstep"
+        "roleplay_enabled": False,
+        "roleplay_cards": [],
         "window_opacity": 0.92,
         "accent": "#6c8ef5",
         "theme_file": "",
@@ -101,12 +110,97 @@ DEFAULTS: Dict[str, Any] = {
         # 需求：思维链显示开关——开启后模型返回 reasoning_content（DeepSeek/Qwen 等）
         # 或使用 \\@thinking 技能时，聊天气泡内展示思考过程
         "show_thinking": False,
+        # 需求：允许调用 skillpub 主开关——关闭后 AI 不主动调用 skill库 技能，
+        # \\@skillspub / \\@autoskills 与 #技能名 等调用指令全部失效（默认开启）
+        "skillspub_enabled": True,
+        # V2-A5：角色自动写日记（每天固定时间由 Cron 触发，AI 生成第一人称日记）
+        "auto_diary_enabled": False,
+        "auto_diary_time": "23:00",
     },
     # 需求：联网搜索（允许联网开关 + 搜索引擎 API）
     "web": {
         "enabled": False,
         "search_base": "",
         "search_key": "",
+        # V2：多引擎搜索 provider 链 + auto-fallback（留空 = 仅原 search_base 单引擎）
+        "search_providers": [],
+        "search_fallback": True,
+        "search_rate_limit": True,
+    },
+
+    # ================================================================
+    # V2 新增配置段（详见 history_guide/V2/）
+    # 说明：旧 config.json 缺失这些键会被 _deep_merge 自动补全，无需迁移。
+    # ================================================================
+
+    # V2-B1：通用 Cron 定时引擎（统一桌宠问候/提醒/记忆清理等定时器）
+    "cron": {
+        "enabled": True,            # 引擎总开关
+        "check_interval_sec": 60,   # 到期检查间隔（秒）
+        "default_timeout_min": 20,  # 单次任务执行超时（分钟）
+        "job_file": "./data/cron_jobs.json",     # 任务存储
+        "runs_dir": "./data/cron_runs",          # 运行历史目录
+    },
+
+    # V2-B2：心跳巡检（桌宠主动关怀；默认关闭，开启后按间隔巡检数据目录变化）
+    "heartbeat": {
+        "enabled": False,           # 巡检总开关
+        "interval_min": 31,         # 巡检间隔（分钟）
+        "watch_dirs": [],           # 额外监听目录（默认监听 history/dailydata/createimage）
+        "max_active_per_day": 6,    # 每天最多主动关怀次数（防打扰）
+    },
+
+    # V2-B5：统一通知服务
+    "notify": {
+        "enabled": True,
+        # 桌面弹窗时机：always=总是 / when_unfocused=仅主窗口失焦时
+        "desktop_focus": "always",
+        "idempotency_ttl_min": 10,  # 幂等去重 TTL（分钟）
+    },
+
+    # V2-A2：固定记忆（pinned.md，永远注入系统提示词）
+    "pinned": {
+        "enabled": True,
+        "file": "./data/pinned.md",
+    },
+
+    # V2-A3：Memory Dream 周期性记忆整合（默认关闭，可手动触发）
+    "dream": {
+        "enabled": False,
+        "interval_hours": 24,
+    },
+
+    # V2-A1：记忆传送带（today → daily → week → longterm）
+    "memory_compile": {
+        "enabled": True,
+        "daily_retention_days": 6,  # week 段保留最近 N 个逻辑日
+        "max_context_tokens": 2000, # 拼装后 memory.md 上限
+    },
+
+    # V2-E1：会话搜索
+    "search": {
+        "max_results": 30,
+    },
+
+    # V2-C1：技能包
+    "skill_bundles": {
+        "file": "./data/skill_bundles.json",
+    },
+
+    # V2-C2：角色卡打包
+    "character_card": {
+        "max_upload_mb": 80,
+        "export_dir": "./data/character_cards",
+    },
+
+    # V2-D2：文件读写工具 + 版本历史
+    "file_tools": {
+        "enabled": True,
+        # 允许读写的根目录白名单（相对项目根；其余目录受 PathGuard 只读约束）
+        "writable_roots": ["./data", "./dailydata", "./createimage"],
+        "history_enabled": True,    # 文件历史版本快照开关
+        "history_max_days": 30,     # 快照保留天数
+        "history_max_total_mb": 500,
     },
 }
 
@@ -283,6 +377,10 @@ class ConfigLoader:
         """小模型（记忆）独立 API Key（为空则复用主 API）。"""
         return (self.get("api", "small_key", default="") or "")
 
+    def small_thinking_off(self) -> bool:
+        """小模型（工具类非流式调用）是否优先关闭思考模式（默认开启）。"""
+        return bool(self.get("api", "small_thinking_off", default=True))
+
     def main_model(self) -> str:
         return self.get("api", "main_model", default=DEFAULTS["api"]["main_model"]) or "gpt-4o"
 
@@ -307,6 +405,20 @@ class ConfigLoader:
     def image_dir(self) -> Path:
         """生图 / API 生成图片保存目录（默认 <项目>/createimage，可配置）。"""
         return self.path("api", "image_dir", default="./createimage")
+
+    def attach_max_chars(self) -> int:
+        """单个附件注入对话的字数上限（附件原文；超出时保留开头 + 结尾）。
+
+        需求（用户反馈「上传的 PDF 识别内容会被截断」）：原上限 12000 字，
+        一篇 2.4 万字的论文只能进去一半、5 万字的论文只进 1/4。现默认为
+        **32000 字**（约 2~3 万 token，64k 上下文模型也放得下），并可按主模型
+        上下文在「设置 → 多模态」里调大（上限 400000 字）。
+        """
+        try:
+            val = int(self.get("api", "attach_max_chars", default=32000) or 32000)
+        except Exception:  # noqa: BLE001
+            val = 32000
+        return max(2000, min(val, 400000))
 
     def web_enabled(self) -> bool:
         """允许联网开关（全局开关；还需技能/指令触发才会真正搜索）。"""
@@ -339,6 +451,133 @@ class ConfigLoader:
     def pet_zoom_enabled(self) -> bool:
         """桌宠滚轮缩放是否启用（默认开启）。"""
         return bool(self.get("pet", "zoom_enabled", default=True))
+
+    # ------------------------------------------------------------ V2 访问器
+    def cron_enabled(self) -> bool:
+        """通用 Cron 定时引擎总开关。"""
+        return bool(self.get("cron", "enabled", default=True))
+
+    def cron_check_interval_sec(self) -> int:
+        """Cron 到期检查间隔（秒）。"""
+        return int(self.get("cron", "check_interval_sec", default=60) or 60)
+
+    def cron_default_timeout_min(self) -> int:
+        """Cron 单次任务执行超时（分钟）。"""
+        return int(self.get("cron", "default_timeout_min", default=20) or 20)
+
+    def cron_job_file(self) -> Path:
+        """Cron 任务存储文件路径。"""
+        return self.path("cron", "job_file", default="./data/cron_jobs.json")
+
+    def cron_runs_dir(self) -> Path:
+        """Cron 运行历史目录。"""
+        return self.path("cron", "runs_dir", default="./data/cron_runs")
+
+    def heartbeat_enabled(self) -> bool:
+        """心跳巡检开关。"""
+        return bool(self.get("heartbeat", "enabled", default=False))
+
+    def heartbeat_interval_min(self) -> int:
+        """心跳巡检间隔（分钟）。"""
+        return int(self.get("heartbeat", "interval_min", default=31) or 31)
+
+    def heartbeat_watch_dirs(self) -> list:
+        """心跳额外监听目录（绝对路径列表；相对路径基于项目根解析）。"""
+        raw = self.get("heartbeat", "watch_dirs", default=[]) or []
+        out = []
+        for d in raw:
+            p = Path(str(d))
+            out.append(str(p if p.is_absolute() else (ROOT / p)))
+        return out
+
+    def heartbeat_max_active_per_day(self) -> int:
+        """每天最多主动关怀次数。"""
+        return int(self.get("heartbeat", "max_active_per_day", default=6) or 6)
+
+    def notify_enabled(self) -> bool:
+        """统一通知服务开关。"""
+        return bool(self.get("notify", "enabled", default=True))
+
+    def notify_desktop_focus(self) -> str:
+        """桌面弹窗时机：always / when_unfocused。"""
+        return (self.get("notify", "desktop_focus", default="always") or "always").strip()
+
+    def notify_idempotency_ttl_min(self) -> int:
+        """通知幂等去重 TTL（分钟）。"""
+        return int(self.get("notify", "idempotency_ttl_min", default=10) or 10)
+
+    def pinned_enabled(self) -> bool:
+        """固定记忆开关。"""
+        return bool(self.get("pinned", "enabled", default=True))
+
+    def pinned_file(self) -> Path:
+        """固定记忆 pinned.md 路径。"""
+        return self.path("pinned", "file", default="./data/pinned.md")
+
+    def dream_enabled(self) -> bool:
+        """Memory Dream 周期整合开关。"""
+        return bool(self.get("dream", "enabled", default=False))
+
+    def dream_interval_hours(self) -> int:
+        """Memory Dream 整合间隔（小时）。"""
+        return int(self.get("dream", "interval_hours", default=24) or 24)
+
+    def memory_compile_enabled(self) -> bool:
+        """记忆传送带开关。"""
+        return bool(self.get("memory_compile", "enabled", default=True))
+
+    def memory_compile_daily_retention_days(self) -> int:
+        """week 段保留最近 N 个逻辑日。"""
+        return int(self.get("memory_compile", "daily_retention_days", default=6) or 6)
+
+    def memory_compile_max_context_tokens(self) -> int:
+        """拼装后 memory.md 的 token 上限。"""
+        return int(self.get("memory_compile", "max_context_tokens", default=2000) or 2000)
+
+    def search_max_results(self) -> int:
+        """会话搜索结果上限。"""
+        return int(self.get("search", "max_results", default=30) or 30)
+
+    def skill_bundles_file(self) -> Path:
+        """技能包存储文件路径。"""
+        return self.path("skill_bundles", "file", default="./data/skill_bundles.json")
+
+    def character_card_max_upload_mb(self) -> int:
+        """角色卡上传大小上限（MB）。"""
+        return int(self.get("character_card", "max_upload_mb", default=80) or 80)
+
+    def character_card_export_dir(self) -> Path:
+        """角色卡导出目录。"""
+        return self.path("character_card", "export_dir", default="./data/character_cards")
+
+    def file_tools_enabled(self) -> bool:
+        """文件读写工具开关。"""
+        return bool(self.get("file_tools", "enabled", default=True))
+
+    def file_tools_writable_roots(self) -> list:
+        """文件工具可读写根目录白名单（相对项目根解析为绝对路径）。"""
+        raw = self.get("file_tools", "writable_roots", default=[]) or []
+        out = []
+        for r in raw:
+            p = Path(str(r))
+            out.append(str(p if p.is_absolute() else (ROOT / p)))
+        return out
+
+    def file_tools_history_enabled(self) -> bool:
+        """文件历史版本快照开关。"""
+        return bool(self.get("file_tools", "history_enabled", default=True))
+
+    def web_search_providers(self) -> list:
+        """多引擎搜索 provider 链（空 = 仅原 search_base 单引擎）。"""
+        return list(self.get("web", "search_providers", default=[]) or [])
+
+    def web_search_fallback(self) -> bool:
+        """搜索 auto-fallback 开关。"""
+        return bool(self.get("web", "search_fallback", default=True))
+
+    def web_search_rate_limit(self) -> bool:
+        """搜索限流重试开关。"""
+        return bool(self.get("web", "search_rate_limit", default=True))
 
     # ------------------------------------------------------------ 路径解析
     def path(self, *keys: str, default: str = "") -> Path:
@@ -375,6 +614,16 @@ class ConfigLoader:
     def skills_dir(self) -> Path:
         """技能数据目录（tools_list.json / skilltools_information.json）。"""
         return self.path("paths", "skills", default="./skills")
+
+    @property
+    def skillspub_dir(self) -> Path:
+        """skill库（skillspub）目录（catalog.json 索引 + 每技能一个文件夹/SKILL.md）。"""
+        return self.path("paths", "skillspub", default="./skillspub")
+
+    @property
+    def skilluserdata_dir(self) -> Path:
+        """技能产出目录（skilluserdata/<日期时间>/，一个对话一个项目文件夹）。"""
+        return self.path("paths", "skilluserdata", default="./skilluserdata")
 
     @property
     def conversations_dir(self) -> Path:

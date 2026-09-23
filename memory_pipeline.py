@@ -33,6 +33,13 @@ from typing import Any, Deque, Dict, List, Optional
 
 logger = logging.getLogger("AI_DeskMate.Memory")
 
+# 记忆模式命名空间（需求：角色扮演记忆与日常对话记忆分开存储）
+# - MODE_NORMAL  ：日常对话记忆（现有 role/group 命名空间，兼容旧数据）
+# - MODE_ROLEPLAY：角色扮演记忆（独立短期 key 前缀 + chroma metadata mode=roleplay，
+#                  检索/归档严格隔离，日常对话绝不会读到角色扮演记忆）
+MODE_NORMAL = "normal"
+MODE_ROLEPLAY = "roleplay"
+
 try:
     import chromadb  # type: ignore
     from chromadb.config import Settings as _ChromaSettings  # type: ignore
@@ -200,8 +207,27 @@ class MemoryPipeline:
 
     # ------------------------------------------------------------ 短期记忆
     @staticmethod
-    def _st_key(role: str, group: Optional[str]) -> str:
-        return f"group:{group}" if group else role
+    def _st_key(role: str, group: Optional[str],
+                mode: str = MODE_NORMAL, scope: str = "") -> str:
+        """短期记忆 key（落盘文件名安全）。
+
+        日常：`group:{group}` 或 `role`（沿用现有命名空间，兼容旧存档）；
+        角色扮演：`roleplay_` 前缀 + 冒号替换为下划线（Windows 文件名安全），
+        与日常记忆完全隔离。
+
+        scope：会话作用域（角色扮演「每个对话独立」开关开启时传入唯一会话 ID），
+        非空时追加到 key 末尾，使各会话的短期记忆互不共享；
+        为空则沿用角色/群聊级共享（默认行为，向后兼容）。
+        """
+        base = f"group:{group}" if group else role
+        if mode == MODE_ROLEPLAY:
+            # 替换 Windows 文件名非法字符（: / \ ? * 等），保证落盘安全
+            base = "roleplay_" + re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", base)
+        elif mode != MODE_NORMAL:
+            base = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", f"{mode}_{base}")
+        if scope:
+            base += "_" + re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", str(scope))
+        return base
 
     def _load_short(self, key: str) -> Deque[Dict[str, Any]]:
         with self._lock:
@@ -233,9 +259,13 @@ class MemoryPipeline:
             logger.warning("短期记忆保存失败 %s: %s", key, exc)
 
     def recent_turns(self, role: str, group: Optional[str] = None,
-                     limit: int = 10) -> List[Dict[str, str]]:
-        """返回最近 limit 轮对话（供主模型上下文拼接）。"""
-        dq = self._load_short(self._st_key(role, group))
+                     limit: int = 10, mode: str = MODE_NORMAL,
+                     scope: str = "") -> List[Dict[str, str]]:
+        """返回最近 limit 轮对话（供主模型上下文拼接）。
+
+        mode 隔离日常/角色扮演记忆；scope 进一步隔离到单个会话。
+        """
+        dq = self._load_short(self._st_key(role, group, mode, scope))
         items = list(dq)[-limit * 2:]
         return [
             {
@@ -281,12 +311,19 @@ class MemoryPipeline:
     # ------------------------------------------------------------ 前置检索
     def retrieve_before(self, prompt: str, role: str,
                         group: Optional[str] = None,
-                        denoise: Optional[bool] = None) -> str:
+                        denoise: Optional[bool] = None,
+                        mode: str = MODE_NORMAL,
+                        scope: str = "") -> str:
         """对话前检索记忆并组装上下文。
 
         流程：ChromaDB 初筛（long_term + important）→ 小模型降噪（超时/失败自动
         回退原始结果）→ 命中计数 → 组装「[重要记忆] + [长期记忆]」上下文串。
         返回空串表示无相关记忆。
+
+        mode：记忆模式命名空间。日常对话只读日常记忆，角色扮演只读角色扮演记忆，
+        互不可见（关闭角色扮演后，角色扮演期间产生的记忆不会进入日常对话）。
+        scope：会话作用域（「每个对话独立」时传会话 ID），非空时只检索该会话
+        产生的长期记忆（旧数据无 scope 字段视为共享，保证向后兼容）。
         """
         if self._db.client is None or not prompt or not prompt.strip():
             return ""
@@ -294,8 +331,10 @@ class MemoryPipeline:
         top_lt = int(cfg.get("memory", "top_k_long_term", default=3))
         top_imp = int(cfg.get("memory", "top_k_important", default=2))
 
-        lt_hits = self._query_coll(self._db.long_term, prompt, top_lt, role, group)
-        imp_hits = self._query_coll(self._db.important, prompt, top_imp, role, group)
+        lt_hits = self._query_coll(self._db.long_term, prompt, top_lt,
+                                   role, group, mode, scope)
+        imp_hits = self._query_coll(self._db.important, prompt, top_imp,
+                                    role, group, mode, scope)
         if not lt_hits and not imp_hits:
             return ""
 
@@ -316,8 +355,15 @@ class MemoryPipeline:
 
     # ------------------------------------------------------------ 检索工具
     def _query_coll(self, coll: Any, text: str, k: int,
-                    role: str, group: Optional[str]) -> List[Dict[str, Any]]:
-        """从指定集合检索 top-k 相关记忆（带角色/群聊元数据过滤）。"""
+                    role: str, group: Optional[str],
+                    mode: str = MODE_NORMAL,
+                    scope: str = "") -> List[Dict[str, Any]]:
+        """从指定集合检索 top-k 相关记忆（角色/群聊元数据过滤 + mode 命名空间过滤）。
+
+        mode=normal：剔除角色扮演条目（旧数据无 mode 字段视为 normal，兼容）；
+        mode=roleplay：只保留角色扮演条目。查询数量放大后过滤，保证过滤后仍有 k 条。
+        scope：会话作用域；非空时只保留同 scope 或无 scope 的条目（兼容旧数据）。
+        """
         if coll is None or k <= 0:
             return []
         try:
@@ -326,10 +372,11 @@ class MemoryPipeline:
             logger.warning("embedding 计算失败: %s", exc)
             return []
         where: Dict[str, str] = {"group": group} if group else {"role": role}
+        want = k * 4
         try:
             with self._db.lock:
                 res = coll.query(
-                    query_embeddings=emb, n_results=k, where=where,
+                    query_embeddings=emb, n_results=want, where=where,
                     include=["documents", "metadatas", "distances"],
                 )
         except Exception:  # noqa: BLE001 - 空集合 / where 无匹配
@@ -340,7 +387,7 @@ class MemoryPipeline:
                         return []
                     res = coll.query(
                         query_embeddings=emb,
-                        n_results=min(k, count),
+                        n_results=min(want, count),
                         include=["documents", "metadatas", "distances"],
                     )
             except Exception as exc:  # noqa: BLE001
@@ -358,7 +405,20 @@ class MemoryPipeline:
                 "distance": dists[i] if i < len(dists) else 1.0,
                 "meta": metas[i] if i < len(metas) else {},
             })
-        return hits
+        # 按 mode 命名空间过滤：日常只留非角色扮演；角色扮演只留角色扮演条目
+        if mode == MODE_ROLEPLAY:
+            hits = [h for h in hits
+                    if (h.get("meta") or {}).get("mode") == MODE_ROLEPLAY]
+        else:
+            hits = [h for h in hits
+                    if (h.get("meta") or {}).get("mode") != MODE_ROLEPLAY]
+        # 会话作用域过滤：开启「每个对话独立」后，各会话只读自己的长期记忆。
+        # 旧数据无 scope 字段，按共享处理（不做过滤）以保证向后兼容。
+        if scope:
+            hits = [h for h in hits
+                    if not (h.get("meta") or {}).get("scope")
+                    or (h.get("meta") or {}).get("scope") == scope]
+        return hits[:k]
 
     def _bump_hits(self, hits: List[Dict[str, Any]]) -> None:
         """更新长期记忆命中次数与最近使用时间。"""
@@ -417,9 +477,15 @@ class MemoryPipeline:
 
     # ------------------------------------------------------------ 后置归档
     def archive_after(self, user_prompt: str, reply: str, role: str,
-                      group: Optional[str] = None) -> None:
-        """对话结束后归档：入短期 → 达阈值裁切 → 小模型提炼 → 防重入库。"""
-        key = self._st_key(role, group)
+                      group: Optional[str] = None,
+                      mode: str = MODE_NORMAL,
+                      scope: str = "") -> None:
+        """对话结束后归档：入短期 → 达阈值裁切 → 小模型提炼 → 防重入库。
+
+        mode：角色扮演对话用 roleplay 命名空间，与日常记忆严格隔离。
+        scope：会话作用域；非空时短期记忆与长期记忆都只写入该会话。
+        """
+        key = self._st_key(role, group, mode, scope)
         dq = self._load_short(key)
         with self._lock:
             dq.append({"role": "user", "name": "用户", "content": user_prompt, "ts": time.time()})
@@ -432,7 +498,7 @@ class MemoryPipeline:
             keep_count = keep * 2
             cut_items = list(dq)[: max(0, len(dq) - keep_count)]
             if cut_items:
-                self._distill_and_store(cut_items, role, group)
+                self._distill_and_store(cut_items, role, group, mode, scope)
                 with self._lock:
                     dq = deque(list(dq)[-keep_count:], maxlen=dq.maxlen)
                     self._short[key] = dq
@@ -441,7 +507,9 @@ class MemoryPipeline:
 
     # ------------------------------------------------------------ 提炼入库
     def _distill_and_store(self, items: List[Dict[str, Any]], role: str,
-                           group: Optional[str]) -> None:
+                           group: Optional[str],
+                           mode: str = MODE_NORMAL,
+                           scope: str = "") -> None:
         """将裁切出的对话交给小模型，拆分为「重要记忆」与「长期记忆」并入库。"""
         pairs: List[str] = []
         i = 0
@@ -475,13 +543,16 @@ class MemoryPipeline:
         for text in important:
             text = str(text).strip()
             if text:
-                self._dedup_and_merge(text, role, group, self._db.important)
+                self._dedup_and_merge(text, role, group, self._db.important,
+                                      mode, scope)
         for text in long_term:
             text = str(text).strip()
             if text:
-                self._dedup_and_merge(text, role, group, self._db.long_term)
+                self._dedup_and_merge(text, role, group, self._db.long_term,
+                                      mode, scope)
 
-    def _distill_single(self, text: str, role: str, group: Optional[str]) -> None:
+    def _distill_single(self, text: str, role: str, group: Optional[str],
+                        mode: str = MODE_NORMAL) -> None:
         """单条信息提炼（德谬歌矩阵训练用）。"""
         if not text.strip():
             return
@@ -505,20 +576,25 @@ class MemoryPipeline:
         long_term = data.get("long_term") if isinstance(data.get("long_term"), list) else []
         for t in important + long_term:
             t = str(t).strip()
+            if t:
+                self._dedup_and_merge(t, role, group, self._db.long_term, mode)
 
     # ------------------------------------------------------------ 防重 / Merge
     def _dedup_and_merge(self, text: str, role: str, group: Optional[str],
-                         coll: Any) -> None:
+                         coll: Any, mode: str = MODE_NORMAL,
+                         scope: str = "") -> None:
         """向量防重与 Merge 三分支决策（线程安全入口）。
 
         整个防重/合并决策纳入 _db_lock 串行化，防止多线程（归档 / 训练 /
         遗忘清理）并发写入冲突。
         """
         with self._db_lock:
-            self._dedup_and_merge_locked(text, role, group, coll)
+            self._dedup_and_merge_locked(text, role, group, coll, mode, scope)
 
     def _dedup_and_merge_locked(self, text: str, role: str,
-                                group: Optional[str], coll: Any) -> None:
+                                group: Optional[str], coll: Any,
+                                mode: str = MODE_NORMAL,
+                                scope: str = "") -> None:
         """向量防重与 Merge 三分支决策（调用方须持有 _db_lock）：
         极高相似（≤high）→ 丢弃；局部相似（≤partial）→ 小模型 Merge 覆盖；
         互不相干 → 插入新记忆。
@@ -551,7 +627,7 @@ class MemoryPipeline:
             logger.warning("防重检索失败: %s", exc)
             return
         if not ids:
-            self._insert_memory(coll, text, role, group, emb)
+            self._insert_memory(coll, text, role, group, emb, mode, scope)
             return
         distance = float((res.get("distances", [[1.0]])[0] or [1.0])[0])
         old_doc = (res.get("documents", [[]])[0] or [""])[0]
@@ -575,7 +651,7 @@ class MemoryPipeline:
             if drift is not None and drift > drift_threshold:
                 logger.info("Merge 语义漂移（%.3f > %.3f），改为新增: %s",
                             drift, drift_threshold, merged[:40])
-                self._insert_memory(coll, merged, role, group)
+                self._insert_memory(coll, merged, role, group, None, mode)
                 return
             # 二次防重：合并结果重新 query，若与库中其它条目高相似则丢弃
             try:
@@ -607,7 +683,7 @@ class MemoryPipeline:
             except Exception as exc:  # noqa: BLE001
                 logger.warning("Merge 写入失败: %s", exc)
             return
-        self._insert_memory(coll, text, role, group, emb)
+        self._insert_memory(coll, text, role, group, emb, mode)
 
     def _merge_memories(self, old: str, new: str) -> "tuple[str, Optional[float]]":
         """小模型将新旧两条相关记忆合并为更完整的一条。
@@ -650,15 +726,22 @@ class MemoryPipeline:
             return merged, None
 
     def _insert_memory(self, coll: Any, text: str, role: str,
-                       group: Optional[str], emb: Optional[List[Any]] = None) -> None:
+                       group: Optional[str], emb: Optional[List[Any]] = None,
+                       mode: str = MODE_NORMAL, scope: str = "") -> None:
         mid = f"mem_{int(time.time() * 1000)}_{uuid.uuid4().hex[:8]}"
         meta: Dict[str, Any] = {
             "role": role,
             "group": group or "",
+            # 需求：角色扮演记忆与日常记忆分开 —— mode 命名空间标记。
+            # 旧数据无 mode 字段，检索时视为 normal（兼容）。
+            "mode": mode,
             "created_at": time.time(),
             "hits": 0,
             "last_used": time.time(),
             "frozen": 0,
+            # 需求：角色扮演「每个对话独立」—— 会话作用域标记。
+            # 旧数据无 scope 字段，检索时按共享处理（兼容）。
+            **({"scope": scope} if scope else {}),
             # 注意：merged_ids 不可写入空列表——ChromaDB 校验要求列表 metadata
             # 非空，否则 add() 抛 ValueError「...to be non-empty in add」，导致
             # 记忆入库全部失败。该字段仅在 Merge 覆盖写入时记录非空链（防振荡）；
@@ -764,6 +847,55 @@ class MemoryPipeline:
                     coll.delete(ids=to_del)
             except Exception as exc:  # noqa: BLE001
                 logger.warning("删除记忆失败: %s", exc)
+        return len(to_del)
+
+    # ------------------------------------------------------------ 角色扮演遗忘
+    def forget_roleplay(self) -> int:
+        """遗忘全部角色扮演记忆（需求：设置面板「角色扮演」区块的遗忘选项）。
+
+        清除：roleplay 命名空间的短期会话存档（talk_roleplay*.json + 内存 deque）
+        + long_term / important 中 mode=roleplay 的条目。日常对话记忆不受影响。
+        """
+        removed = 0
+        with self._lock:
+            for k in [k for k in list(self._short.keys())
+                      if k.startswith("roleplay_")]:
+                removed += len(self._short.pop(k, deque()))
+        try:
+            for fp in self._conversations_dir.glob("talk_roleplay*.json"):
+                try:
+                    fp.unlink()
+                    removed += 1
+                except Exception:  # noqa: BLE001
+                    pass
+        except Exception:  # noqa: BLE001
+            pass
+        for coll in (self._db.long_term, self._db.important):
+            removed += self._drop_by_mode(coll, MODE_ROLEPLAY)
+        if removed:
+            logger.info("遗忘角色扮演记忆：清除 %d 条", removed)
+        self._emit_notice("已遗忘角色扮演记忆")
+        return removed
+
+    def _drop_by_mode(self, coll: Any, mode: str) -> int:
+        """删除集合中 mode 元数据等于指定值的全部条目（角色扮演遗忘用）。"""
+        if coll is None:
+            return 0
+        try:
+            with self._db.lock:
+                data = coll.get(include=["metadatas"])
+        except Exception:  # noqa: BLE001
+            return 0
+        ids = data.get("ids", []) or []
+        metas = data.get("metadatas", []) or []
+        to_del = [mid for mid, m in zip(ids, metas)
+                  if (m or {}).get("mode") == mode]
+        if to_del:
+            try:
+                with self._db.lock:
+                    coll.delete(ids=to_del)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("删除角色扮演记忆失败: %s", exc)
         return len(to_del)
 
     # ------------------------------------------------------------ 德谬歌矩阵训练

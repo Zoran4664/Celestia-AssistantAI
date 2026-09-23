@@ -1,0 +1,39 @@
+#!/bin/sh
+# ============================================================
+# pre-commit — 提交前密钥体检（防泄漏护栏）
+#
+# 背景：本项目曾把真实 API KEY 提交进 skills/skilltools_information.json 并推到
+#       GitHub，历史里永久留下那串字符串。此钩子确保**同类事故不会再发生**：
+#       只要暂存内容里出现密钥特征，提交就被阻止。
+#
+# 启用方式（二选一）：
+#   1) 直接复制到 .git/hooks/pre-commit（本仓库已自动装好）
+#      cp .githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+#   2) 让 git 统一使用本目录（推荐给协作者）：
+#      git config core.hooksPath .githooks
+#
+# 临时绕过（确属示例 / 占位符时）：
+#   SKIP_SECRET_GUARD=1 git commit ...
+# ============================================================
+
+[ "$SKIP_SECRET_GUARD" = "1" ] && exit 0
+
+# 找 python（钩子环境不一定有 PATH，找不到就只提示、不阻断）
+if command -v python >/dev/null 2>&1; then
+    PY=python
+elif command -v python3 >/dev/null 2>&1; then
+    PY=python3
+else
+    echo "[secret_guard] 未找到 python，跳过密钥体检"
+    exit 0
+fi
+
+if "$PY" -X utf8 secret_guard.py --staged; then
+    exit 0
+fi
+
+echo ""
+echo "[secret_guard] 检测到疑似密钥，提交已被阻止。"
+echo "  处理：清空真实值（配置类可跑 python -X utf8 privacy_clean.py --yes）。"
+echo "  确属示例/占位符：SKIP_SECRET_GUARD=1 git commit ..."
+exit 1
