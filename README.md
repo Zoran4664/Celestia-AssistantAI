@@ -36,8 +36,7 @@ Celestia AssistantAI是一个基于 Python + PySide6 + ChromaDB 的多模态大�
 
 ## 二、版本更新记录
 
-<img width="3038" height="1408" alt="SourcecodeGodLaunch" src="https://github.com/user-attachments/assets/cdc81ea5-406d-4d0b-b7e3-dc27eb979873" />
-
+<img width="1600" height="742" alt="git-header" src="https://github.com/user-attachments/assets/2208e71a-eaba-41cd-a2f8-8f4efd040670" />
 
 V0.1
 项目初步实现了纯文本对话功能与记忆，功能，并设计了主界面角色形象随情绪变化的功能。
@@ -103,8 +102,7 @@ V0.3.0
 
 ---
 
-<img width="1440" height="720" alt="git-intro" src="https://github.com/user-attachments/assets/1b6db0bd-3800-4e9e-bfe2-9efa738e3713" />
-
+<img width="1440" height="720" alt="git-intro" src="https://github.com/user-attachments/assets/af624b4e-51a1-4945-a082-91bb1808f434" />
 
 ## 三、文件路径介绍
 
