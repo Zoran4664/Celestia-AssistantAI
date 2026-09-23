@@ -1,19 +1,19 @@
 {
   "api": {
-    "provider": "openai",
-    "api_base": "https://api.siliconflow.cn/v1/",
+    "provider": "custom",
+    "api_base": "",
     "api_key": "",
-    "main_model": "deepseek-ai/DeepSeek-V3.2",
-    "small_base": "https://api.siliconflow.cn/v1/",
+    "main_model": "gpt-4o",
+    "small_base": "",
     "small_key": "",
-    "small_model": "deepseek-ai/DeepSeek-V3.2",
+    "small_model": "gpt-4o-mini",
     "small_thinking_off": true,
-    "vision_base": "https://maas.qianwenaiapi.com/compatible-mode/v1",
+    "vision_base": "",
     "vision_key": "",
-    "vision_model": "qwen3.8-flash",
-    "image_base": "https://maas.qianwenaiapi.com/api/v1/",
+    "vision_model": "gpt-4o",
+    "image_base": "",
     "image_key": "",
-    "image_model": "qwen-image-3.0",
+    "image_model": "",
     "image_dir": "./createimage",
     "main_vision": false,
     "attach_max_chars": 100000
@@ -58,22 +58,14 @@
     ],
     "focus_mode": false,
     "floating_chat": false,
-    "zoom_enabled": true
+    "zoom_enabled": false
   },
   "ui": {
     "blur_background": true,
     "random_proactive": false,
     "roleplay_enabled": false,
     "roleplay_cards": [
-      "rolepersonal/MLPship",
-      "rolepersonal/user",
-      "roletools/OOC与世界观破限",
-      "roletools/TGbreakV3.0.5-DeepSeek",
-      "roletools/anti-AI-style",
-      "roletools/anti-R18+18G",
-      "roletools/anti-R18G",
-      "style/日式轻小说文风",
-      "world/My Little Pony 世界书"
+      "rolepersonal/user"
     ],
     "window_opacity": 0.92,
     "accent": "#6c8ef5",
@@ -81,7 +73,7 @@
     "icon_path": "./data/app.ico",
     "transparent_chat": false,
     "user_name": "用户",
-    "font_family": "SimSun",
+    "font_family": "",
     "last_role": "Twilight_Sparkle",
     "last_group": "",
     "last_mode": "单聊",
@@ -92,11 +84,11 @@
     "auto_diary_time": "23:00",
     "chat_font_size": 13,
     "roleplay_user_persona": "user",
-    "roleplay_ooc_mode": true
+    "roleplay_ooc_mode": false
   },
   "web": {
-    "enabled": true,
-    "search_base": "https://qianfan.baidubce.com/v2/ai_search/config",
+    "enabled": false,
+    "search_base": "",
     "search_key": "",
     "search_providers": [],
     "search_fallback": true,
@@ -110,7 +102,7 @@
     "runs_dir": "./data/cron_runs"
   },
   "heartbeat": {
-    "enabled": true,
+    "enabled": false,
     "interval_min": 30,
     "watch_dirs": [],
     "max_active_per_day": 6

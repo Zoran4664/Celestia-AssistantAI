@@ -68,7 +68,7 @@
     "require_emotion_tag": true,
     "use_daily_context": false,
     "user_persona": "user",
-    "ooc_mode": true
+    "ooc_mode": false
   },
   "isolation": {
     "isolate_normal": true,
@@ -76,13 +76,11 @@
   },
   "cards": {
     "style": [],
-    "world": [
-      "小马国"
+    "world": [],
+    "rolepersonal": [
+      "user"
     ],
-    "rolepersonal": [],
-    "roletools": [
-      "nextstep"
-    ]
+    "roletools": []
   },
   "rules": [],
   "regex": [],
