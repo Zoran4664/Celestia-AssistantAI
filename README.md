@@ -1,7 +1,9 @@
 <img width="1400" height="320" alt="git-Celestia AssistantAI" src="https://github.com/user-attachments/assets/8c2454a0-72ed-4232-90e7-81bc618aeff3" />
 
 **If 'Satisfy human values through friendship and ponies' is truly realized, would you still be willing to face the world?**
+
 **如果“通过友谊与小马，满足人类的价值观”的目标真的实现了，你仍愿笑面这个世界吗?**
+
 ————灵感来源：《友谊是优化》（Friendship is Optimal，作者 Iceman）
 
 ## 一、项目介绍
