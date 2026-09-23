@@ -1,20 +1,41 @@
+<img width="1400" height="320" alt="git-Celestia AssistantAI" src="https://github.com/user-attachments/assets/8c2454a0-72ed-4232-90e7-81bc618aeff3" />
+
+**If 'Satisfy human values through friendship and ponies' is truly realized, would you still be willing to face the world?**
+**如果“通过友谊与小马，满足人类的价值观”的目标真的实现了，你仍愿笑面这个世界吗?**
+————灵感来源：《友谊是优化》（Friendship is Optimal，作者 Iceman）
+
 ## 一、项目介绍
 
-Celestia AssistantAI是一个基于 Python + PySide6 + ChromaDB 的多模态大模型角色对话 Agent 桌面（花瓶）应用，使用了调用deepseek V4的Cline与DSH（大烧货）完成。页面风格参考了常见LLM网页端的布局。未来的目标是实现日常办公学习的辅助以及文字聊天。
+Celestia AssistantAI是一个基于 Python + PySide6 + ChromaDB 的多模态大模型角色对话 Agent 桌面（花瓶）应用，使用了调用deepseek V4的Cline、DSH和白嫖WorkBuddy的deepseek-v4-flash完成。页面风格参考了常见LLM网页端的布局。未来的目标是实现日常办公学习的辅助以及文字聊天。
+
 对话方面本项目使用了chromaDB等实现了三级记忆的管理，确保在不遗忘关键记忆的同时能以最大性价比得到个性化的体验（灵感和思路参考了B站Play0编写的昔莲Cyrene-Agent，德谬歌在发力嗯）。
-本项目通过提示词实现了在日常对话时角色形象会随对话内容的情绪改变（目前内部尚未完成设计，只在测试性实现思路。目前项目内置4位角色（Twilight Sparkle, Rainbow Dash, Fluttershy, Applejack）和5种情绪（平静、震惊、伤心、生气、开心）），这部分未来预计会持续丰富，现演示角色的角色图片为ZoinkscoobFurryNoobAI_V10配合基于Gemini banana模型风格的Lora使用秋叶WebUI与comfyUI生成。其他图片素材均没有仔细绘制。
+
+本项目通过提示词实现了在日常对话时角色形象会随对话内容的情绪改变（目前内部尚未完成设计，只在测试性实现思路。目前项目内置4位角色（Twilight Sparkle, Rainbow Dash, Fluttershy, Applejack）和5种情绪（平静、震惊、伤心、生气、开心）），这部分未来预计会持续丰富，现演示角色的角色图片为ZoinkscoobFurryNoobAI_V10配合基于Gemini banana模型风格的Lora使用秋叶WebUI与comfyUI生成。其他图片素材均没有仔细绘制，未来有时间和经费了做Live 2D（饼）。
+
 同时本应用内置正在持续完善的桌面桌宠功能（目前使用gif和图片切换实现了该部分功能，效果不尽人意，未来再完善了）。
-日常聊天支持多角色对话（还在优化，角色切换的实现效果有时略抽风）和随机主动对话，同时支持加载与管理skill（现在里面的就是我占位用的，后续要改）能够协助办公学习。
-由于梁圣最近因DeepseekV4全面涨价评级降低为梁子，所以为了节省API费用，以及便宜的鲸鱼娘暂未睁眼，以及部分绘图需求，目前模型支持设置主模型/整理记忆用的小模型与MoE多模态模型的分别配置，以及skill的特殊使用需求独立模型，以及支持ollama本地部署模型和硅基流动等聚合站点的API（如因聚合站点的免费账户TPM/RPM存在限制，因此增加了较为严格的打断机制以免影响体验）
+
+日常聊天支持多角色对话（还在优化，角色切换的实现效果有时略抽风）和随机主动对话，同时支持加载简单的技能工具协助办公学习。比如可以编写\@ponywebsite看常见小马网站的网络情况（ping）、\@weather可以调用和风天气API查询天气等等。
+
+目前更新了skillpub可以导入/编写复杂的skill，同时支持开启自动选择调用（\@autoskills）。目前导入了一些生物医学工作与写作的API，还有两个个人执念的彩蛋（/#tothemoon查询本地天象，给出观测建议，/#tothestars查询变星已知情况和瞬变源已知情况，以及CCOR/SOHO彗星坐标查验功能）。
+
+支持设置主模型/小模型与多模态模型和生图的分别配置，以及skill的特殊使用需求独立模型。同时支持ollama本地部署模型和硅基流动等聚合站点的API（如因聚合站点的免费账户TPM/RPM存在限制，因此增加了较为严格的打断机制以免影响体验）
+
 桌宠功能包括了休息提醒、倒计时提醒等实用工具，以及专为网课增加的专注助手（选择页面，若页面被切入后台则进行提示提醒与鞭策）。同时本应用会记录应用打开时间、使用情况等信息，后期在提示对话内容也会更加的个性化。
-本项目支持配置Search API(如谷歌/百度等)，能够打通联网搜索功能，并支持思维链显示（需模型原生支持，否则为伪思维链）。
-本项目也内置了简单的日记本与记录工具，通过记录，角色也能够越来越智能。
+
+本项目支持配置Search API(如谷歌/百度等)，能够打通联网搜索功能，并支持思维链显示和小模型思维链的关闭。同时API管理器可以加入多种API供调用。
+
+本项目也内置了简单的日记本与记录工具，通过记用于收集语料。
+
 本项目也支持读取json格式的标准对话文本数据，你也可以导入扩增后/提取后的对话进行微调。
-目前正在调试Role Play功能，该功能拟实现达到简易酒馆的体验效果，并且可以配置工具功能（例如切换语言风格与对话任务，甚至你可以加入破甲指令！）。
+
+目前加入了类似简易酒馆的Role Play功能，而且支持配置工具功能（例如切换语言风格与对话任务，甚至你可以加入破甲指令（可以看看TGBreak的）！）。
 
 ---
 
 ## 二、版本更新记录
+
+<img width="3038" height="1408" alt="SourcecodeGodLaunch" src="https://github.com/user-attachments/assets/cdc81ea5-406d-4d0b-b7e3-dc27eb979873" />
+
 
 V0.1
 项目初步实现了纯文本对话功能与记忆，功能，并设计了主界面角色形象随情绪变化的功能。
@@ -50,7 +71,9 @@ V0.2.5
 模型优化了主动设置的遗忘策略。
 
 V0.3.0
-合并 V2 开发版改动（在不改变既有 V1 使用方式与默认配置的前提下新增能力）：
+修复了部分正则式的Bug，在上一版上更新并新增新增了大量功能，尤其是支持了复杂的Skills执行能力和Role Play功能。
+
+新增/修正：
 
 - **记忆体系**：记忆传送带 `memory_compile.py`（today → daily → week → longterm）、
   周期记忆整合 `memory_dream.py`、固定记忆 `pinned_memory.py`（`data/pinned.md` 常驻提示词）、
@@ -77,6 +100,9 @@ V0.3.0
 - **角色扮演**：新增 `roleplay/` 子包（世界书 / 文风 / 角色关系 / 反 AI 味等提示词工具）。
 
 ---
+
+<img width="1440" height="720" alt="git-intro" src="https://github.com/user-attachments/assets/1b6db0bd-3800-4e9e-bfe2-9efa738e3713" />
+
 
 ## 三、文件路径介绍
 
@@ -153,7 +179,7 @@ V0.3.0
     └── generate_placeholder_assets.py   # 占位立绘/动图/主题生成器
 ```
 
-> **提交前自检（防密钥泄漏）**：仓库自带 `.githooks/pre-commit` 钩子 —— 若暂存内容里出现
+> **提交前自检**：仓库自带 `.githooks/pre-commit` 钩子 —— 若暂存内容里出现
 > 真实 API KEY，提交会被**阻止**（占位符可 `SKIP_SECRET_GUARD=1 git commit ...` 绕过）。
 > 手动体检：`python -X utf8 secret_guard.py --all`；交付/上传前一键清理：
 > `python -X utf8 privacy_clean.py --yes`（清空 KEY 与个人数据后自动复查）。
