@@ -61,7 +61,7 @@
 | `theme/` | 背景图（`default.png`、`test.png`、`AJ1/RD1/FS1/TS1…` 角色缩写系列、`Dream/Happy/Life/Sky…` 氛围图） | `ui_manager._theme_candidates`(3945)/`_load_theme`(3952)、`daily.py`(619) |
 | `log/` | 主程序错误日志 `error.log`（`ui_manager._log_error` 6254） | 运行时生成 |
 | `utils/logs/` | 应用日志 `app.log`（5MB×3 轮转） | `utils/logger.py` |
-| `history_guide/` | **开发规划文档**（非运行时）：`V2/goat_V2_list.md`（功能补充清单）、`V2/使用说明书.md` | 人工阅读 |
+| `history_guide/` | **开发规划文档**（非运行时）：`V2/使用说明书.md` | 人工阅读 |
 
 ---
 

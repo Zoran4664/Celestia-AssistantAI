@@ -9,7 +9,7 @@ signal_bus.py — 全局信号总线（SignalBus）
     bus.reply_stream.connect(self._on_stream)     # 订阅
     bus.reply_finished.emit(text, role)           # 发布
 
-V2 扩展（goat_V2_list.md B6）：
+V2 扩展：
 - request/handle 请求-响应模式 + 能力注册表：模块间互相查询状态 / 调用能力
     bus.handle("memory:today_summary", fn)        # 注册能力处理器
     bus.request("memory:today_summary", role)     # 请求，返回第一个非 None 结果
