@@ -8,11 +8,30 @@
 ## 0. 通用流程
 
 ```
+0) 一次性：git config core.hooksPath .githooks   （挂密钥护栏；每台机器 / 每次重新克隆各做一次，见下）
 1) 定位：在 main.md 任务表找到手册 → 在手该册按符号名定位
 2) 改动：只改最小范围；新增配置/信号/字段要同步 DEFAULTS / 总线 / 文档
 3) 自测：python -X utf8 -m py_compile <改动文件>
 4) 收尾：更新对应 CodeGuide 手册（符号表 / 坑），删除临时脚本与临时文件
+5) 提交：git commit（步骤 0 已挂护栏时，提交前会自动先跑密钥体检）
 ```
+
+**首次克隆后必做：挂上密钥护栏**
+
+```powershell
+git config core.hooksPath .githooks        # 只写本仓库本地配置，不动全局
+```
+
+- **为什么**：2026-09-23 本项目曾把真实 API KEY 提交进 `skills/skilltools_information.json` 并推送，
+  历史里永久留下那串字符串（只能作废 + 重写历史才清得掉）。护栏把同类事故挡在**提交之前**。
+- **做什么**：`.githooks/pre-commit` 会跑 `python -X utf8 secret_guard.py --staged`，
+  暂存内容命中密钥特征（`sk-…`、`bce-v3/…`、`ALTAK-…`、`Bearer <长串>`、
+  `"api_key"|"password"|…` 非空值、本机 `盘符:\` 路径）就**阻止提交**（exit 1，片段打码输出）。
+- **绕过**（确属占位符，如文档里的 `sk-xxxx` 示例）：`SKIP_SECRET_GUARD=1 git commit -m "..."`（仅本次）。
+- **手动等价命令**见 §13；上传/交付前跑 `--all` 做整体体检。
+- **私有规则**（防自己的真名/邮箱被提交）：`data/.secret_guard.json` 写
+  `{"patterns": ["你的真名", "你的邮箱"], "files": ["data/notes.md"]}` —— 该文件已在 `.gitignore` 中。
+- **注意**：`core.hooksPath` 是**本地仓库配置**（存在 `.git/config`），所以换机器 / 重新克隆后要重做步骤 0。
 
 **硬性规范**
 - **R1 禁 emoji 美化**：界面/卡片/通知/按钮一律用文字 + 颜色/QSS/`img/` 图片表达，不得用 emoji 充当图标或装饰。
@@ -169,4 +188,9 @@
 
 ```powershell
 python -X utf8 -m py_compile <file.py>                    # 单文件语法
+python -X utf8 secret_guard.py --staged                   # 只看暂存内容（pre-commit 钩子用）
+python -X utf8 secret_guard.py --tracked                  # 只查已被 git 跟踪的文件
+python -X utf8 secret_guard.py --all                      # 查整个工作区（上传/交付前体检）
+python -X utf8 privacy_clean.py --scan                    # 交付前隐私体检（只读预览）
+git config core.hooksPath .githooks                       # 挂密钥护栏（首次克隆必做，见 §0）
 ```

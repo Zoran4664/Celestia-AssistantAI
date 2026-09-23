@@ -29,7 +29,7 @@ python -X utf8 -m py_compile ui_manager.py    # 单文件语法校验（发布�
 |---|---|---|
 | R1 | **前端界面美化不得使用 emoji 表情** | 界面文案、按钮、状态提示、天气/工具卡片、通知等一律用**文字 + 图形/颜色/QSS**表达，禁止用 😀🌤️⚠️ 之类 emoji 充当图标或装饰。需要图标时用 `img/` 下的图片或纯 CSS 形状。 |
 | R2 | **一律使用 UTF-8 执行** | 所有命令加 `python -X utf8 ...`（入口脚本已调 `utils.utf8.force_utf8_stdio()`）；代码中所有文件读写显式 `encoding="utf-8"`（读外部/旧文件时才允许 GBK 回退）；新增文本文件均存为 UTF-8。 |
-| R3 | **绝不提交真实密钥**（`2026-09-23` 新增） | 事故复盘：曾把真实 KEY 写进 `skills/skilltools_information.json` 并推到 GitHub，事后只能作废 —— 历史里的字符串删不干净。现在有三层护栏：① 提交时 `.githooks/pre-commit` → `secret_guard.py --staged`，命中即**阻止提交**（占位符可 `SKIP_SECRET_GUARD=1` 绕过）；② 交付/上传前跑 `python -X utf8 privacy_clean.py --yes`（清空 KEY 后自动复查）；③ `data/api_vault.json`、`data/.secret_guard.json` 已进 `.gitignore`。配置/技能里一律留空串 `""`，**不要**把真值补进仓库。 |
+| R3 | **绝不提交真实密钥**（`2026-09-23` 新增） | 事故复盘：曾把真实 KEY 写进 `skills/skilltools_information.json` 并推到 GitHub，事后只能作废 —— 历史里的字符串删不干净。现在有三层护栏：① 提交时 `.githooks/pre-commit` → `secret_guard.py --staged`，命中即**阻止提交**（占位符可 `SKIP_SECRET_GUARD=1` 绕过）；② 交付/上传前跑 `python -X utf8 privacy_clean.py --yes`（清空 KEY 后自动复查）；③ `data/api_vault.json`、`data/.secret_guard.json` 已进 `.gitignore`。配置/技能里一律留空串 `""`，**不要**把真值补进仓库。**注意**：`core.hooksPath` 是**本地仓库配置**，所以克隆后 / 换机器后要各执行一次 `git config core.hooksPath .githooks`，护栏才生效（步骤与坑见 `10` §0）。 |
 
 ---
 
@@ -89,6 +89,7 @@ python -X utf8 -m py_compile ui_manager.py    # 单文件语法校验（发布�
 | 改天气卡片 | `07` | `weather_service.fetch_bundle/render_weather_html` |
 | 改天气**定位**（本机 IP → 静态城市表，禁 GeoAPI） | `07` | `weather_service.resolve_location`、`ip_info`、`local_city_lookup` |
 | **一键清除隐私数据**（交付前干净化） | `07`+`09` | `privacy_clean.py`、设置面板「隐私与清理」、`main.py purge_pending` |
+| **挂密钥护栏 / 提交前体检**（克隆后必做） | `10`+`main` | `git config core.hooksPath .githooks`（一次）、`secret_guard.py --staged/--all`、`privacy_clean.py --scan` |
 | 改角色名显示 / 顶部选择框宽度 | `02`+`05` | `RoleManager.sidebar_label`、`MainWindow._fit_select_combo`、`_SELECT_MAX_W` |
 | 改桌宠菜单/提醒/小窗 | `07` | `pet_manager.DesktopPet`、`MiniChatWindow`、`AlertPopup` |
 | 改文件读写技能/路径权限 | `07` | `file_tools.FileTools`、`utils/path_guard.PathGuard` |
@@ -178,11 +179,15 @@ Celestia-AssistantAI/
 3. **绝不提交真实密钥**：提交前 `.githooks/pre-commit` 会跑 `secret_guard.py --staged`，
    命中即**阻止提交**；交付/上传前跑 `python -X utf8 privacy_clean.py --yes`
    清空 KEY 并自动复查。配置文件里一律留空串 `""`。
+   **前提**：钩子要先挂上 —— `git config core.hooksPath .githooks`（**本地**配置，
+   克隆后 / 换机器后各做一次）；没挂时提交**不会**自动体检，要手动跑 §4.3 的 `--staged`。
 
 ### 4.3 常用验证命令
 
 ```powershell
 python -X utf8 -m py_compile ui_manager.py      # 单文件语法校验
+git config core.hooksPath .githooks             # 挂密钥护栏（克隆后必做一次）
+python -X utf8 secret_guard.py --staged         # 只看暂存内容（钩子内部用）
 python -X utf8 secret_guard.py --all            # 提交/上传前密钥体检（护栏）
 python -X utf8 main.py --no-pet --debug         # 启动主程序（观察日志 log/error.log）
 python -X utf8 privacy_clean.py --scan          # 交付前隐私体检（只读预览）
