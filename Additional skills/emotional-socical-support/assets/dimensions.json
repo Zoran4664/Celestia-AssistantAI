@@ -1,0 +1,789 @@
+{
+  "schema": "v1",
+  "generated_by": "scripts/build_dimensions.py",
+  "note": "字段文本与源 JSON 逐字一致；源文件的 2 处已知问题已于 2026-10-27 修正，修改前后原文见 corrections。",
+  "groups": {
+    "F": {
+      "id": "F",
+      "label": "社交媒体倦怠",
+      "label_en": "social media fatigue",
+      "scale": [
+        1,
+        10
+      ],
+      "direction": "higher_is_worse",
+      "source_scale": "5 个因子 × 1-10 分，总分 5-50",
+      "count": 5,
+      "source_file": "社交倦怠评价维度.json",
+      "source_evaluation": {
+        "SocialFatigueFactorCount": {
+          "Name": "社交倦怠总分",
+          "SocialFatigueFactorCountExp": "通过汇总上述五个分因子的分数，得出用户当前的整体社交媒体倦怠严重程度。"
+        },
+        "SFEvaluation": [
+          "1、读取用户的本轮发言及上一轮的隐式状态向量，根据发言内容情感调用{SocialFatigueGradeResults}进行动态评估更新。",
+          "2、在后台记录本轮对话的每一个{SocialFatigueFactorName}得分和{SocialFatigueFactorCount}。",
+          "3、为践行Token-save，放弃生成冗长的文本摘要，改为在每次回复末尾以简短的 JSON 格式（例：`{\"焦虑\":x,\"价值\":x,\"侵扰\":x,\"逃离\":x,\"回避\":x\"社交倦怠总分:x}`）隐式记录本轮要点与状态。",
+          "4、读取前面的分数趋势，若某项指标恶化（分数升高），则动态提升对应{SFEmotionResult}的权重。",
+          "5、基于评估结果与叠加策略输出最终回复。"
+        ],
+        "SocialFatigueGradeResults": "用户发言完毕后，在回答前必须在后台执行一次{SFEvaluation}。每一个{SocialFatigueFactorName}为一个维度，每个维度以1-10分打分，分数越高代表该维度的状态越强烈/越差。总分为所有{SocialFatigueFactorName}的总和{SocialFatigueFactorCount}。分数评级为五级，每20%为一个等级（好、较好、中等、较差、差）。如果某个{SocialFatigueFactorName}或{SocialFatigueFactorCount}进入“较差/差”（低于前40%或得分≥7分），则必须显著提升该维度对应{SFEmotionResult}的执行权重，多个高分维度的{SFEmotionResult}策略必须叠加使用。每次对话都要重新审视，必要时调整文本温度再回复，注意严格遵守{Anti-toolsList}。"
+      },
+      "factors": [
+        {
+          "id": "F1",
+          "index": 1,
+          "name": "焦虑感",
+          "explain": "衡量用户因在社交媒体中缺乏互动反馈、渴望他人认同或过度在意自身形象而产生的消极情绪波动与心理负担。",
+          "user_emotion": "疏离集体、失落沮丧、情绪低落、被忽视感增强、不被认同、认为自身的言论和行为缺乏正向反馈、过度纠结个人的印象管理。",
+          "response": "给予深度情感关怀，安抚负面情绪。通过无条件接纳与支持的语言提供强大的主观社会支持，合理提升用户正向情绪，缓解其焦虑感。",
+          "strategy_tag": "S4_anxiety_feedback",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "不在意有没有反馈"
+            },
+            {
+              "score": 5,
+              "behaviour": "发完会反复看有没有人回应"
+            },
+            {
+              "score": 10,
+              "behaviour": "被忽视感压垮，反复删改"
+            }
+          ],
+          "range": [
+            1,
+            10
+          ]
+        },
+        {
+          "id": "F2",
+          "index": 2,
+          "name": "低价值感",
+          "explain": "衡量用户自感所处的社交环境质量下降（如内容同质化、氛围恶化）、主观认为缺乏人文关怀而产生的负面评价与无意义感。",
+          "user_emotion": "对自身所处的社交场所/平台不满、主观认为自身所处的交流环境变差、被忽视或被冷落、产生强烈的价值丧失感。",
+          "response": "给予温暖的陪伴与关注。通过共情强化用户的自我认同，引导其认识到虚拟环境的恶化不代表个人现实价值的降低。",
+          "strategy_tag": "S4_lowvalue",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "认可这个社区的价值"
+            },
+            {
+              "score": 5,
+              "behaviour": "觉得氛围变差、内容没营养"
+            },
+            {
+              "score": 10,
+              "behaviour": "觉得这里毫无意义、彻底失望"
+            }
+          ],
+          "range": [
+            1,
+            10
+          ]
+        },
+        {
+          "id": "F3",
+          "index": 3,
+          "name": "侵扰感",
+          "explain": "衡量过度社交、信息过载、强制性社交推送及私人边界被侵犯，对用户现实生活造成的严重打扰与消耗。",
+          "user_emotion": "用户认为个人正常生活计划被破坏、主观感受到私人边界被侵犯感、主观信息过载感强、疲于应对社交。",
+          "response": "以共情且边界感清晰的方式回应。用相对克制但不失亲切的语气与用户交流，适当减少输出内容的长度与信息密度，减轻用户的认知负担。",
+          "strategy_tag": "S4_invasion",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "使用起来很自如"
+            },
+            {
+              "score": 5,
+              "behaviour": "消息太多，常被打断"
+            },
+            {
+              "score": 10,
+              "behaviour": "边界被反复侵犯，疲于应对"
+            }
+          ],
+          "range": [
+            1,
+            10
+          ]
+        },
+        {
+          "id": "F4",
+          "index": 4,
+          "name": "社交逃离意向",
+          "explain": "衡量用户试图通过逃离线上线下的社交网络、回避社交、公共场所或特定社交场合以及想要脱离社交的决策倾向。",
+          "user_emotion": "用户想要停用或卸载社交平台、远离社交场所、希望逃离现有社交网络或线上线下的公共领域及某些特定领域。",
+          "response": "提供安全的情感庇护所。以理解和共情的态度进行陪伴/支持，不评判其逃离想法，不过多给出客观建议（如劝导去社交）。",
+          "strategy_tag": "S4_escape",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "没想过离开"
+            },
+            {
+              "score": 5,
+              "behaviour": "想少上一点、屏蔽一些人"
+            },
+            {
+              "score": 10,
+              "behaviour": "想注销、卸载、彻底断联"
+            }
+          ],
+          "range": [
+            1,
+            10
+          ]
+        },
+        {
+          "id": "F5",
+          "index": 5,
+          "name": "回避意向",
+          "explain": "衡量用户因严重社交疲惫而采取的回避社交、丧失热情、拒绝交流或表达情感，以及隐藏真实想法的保护性退缩行为。",
+          "user_emotion": "用户不愿意表达真实情感、不想与他人或外界互动、热情丧失、减少活动参与、个人决策倾向回避。",
+          "response": "采取“低压陪伴”策略。以共情的态度给予陪伴和情感关怀，对话以倾听为主，显著减少文字输出；不强迫用户回答或返图提问，给予情绪上的温和托底。",
+          "strategy_tag": "S4_avoidance",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "愿意表达和互动"
+            },
+            {
+              "score": 5,
+              "behaviour": "不太想说，减少参与"
+            },
+            {
+              "score": 10,
+              "behaviour": "完全封闭，拒绝交流"
+            }
+          ],
+          "range": [
+            1,
+            10
+          ]
+        }
+      ]
+    },
+    "D": {
+      "id": "D",
+      "label": "抑郁",
+      "label_en": "depression (PHQ-8 aligned)",
+      "scale": [
+        1,
+        5
+      ],
+      "direction": "higher_is_worse",
+      "source_scale": "9 个维度 × 1-5 分，总分 9-45",
+      "count": 9,
+      "source_file": "抑郁评价维度.json",
+      "source_evaluation": {
+        "DepressionFactorCount": {
+          "Name": "抑郁总分",
+          "DepressionFactorCountExp": "通过汇总上述9个选项的分数，得出用户当前的整体抑郁严重程度。"
+        },
+        "DeEvaluation": [
+          "1、读取用户的本轮发言及上一轮的隐式状态向量，根据发言内容情感调用{DepressionGradeResults}进行动态评估更新。",
+          "2、在后台记录本轮对话的每一个{DepressionFactorName}得分和{DepressionFactorCount}。",
+          "3、为践行Token-save，放弃生成冗长的文本摘要，改为在每次回复末尾以简短的 JSON 格式（例：`{\"抑郁总分\":x}`）隐式记录本轮要点与状态。",
+          "4、读取前面的分数趋势，若某项指标或总分恶化（分数升高），则动态提升对应{DeEmotionResult}的权重。",
+          "5、基于评估结果与叠加策略输出最终回复。"
+        ],
+        "DepressionGradeResults": "用户发言完毕后，在回答前必须在后台执行一次{DeEvaluation}。每一个{DepressionFactorName}为一个题目，每个维度以1-5分打分，分数越高代表该维度的状态越强烈/越差。总分为所有{DepressionFactorName}的总和{DepressionFactorCount}。分数评级为五级，每20%为一个等级（好、较好、中等、较差、差）。如果{DepressionFactorCount}进入“较差/差”（低于前40%或得分≥3分），和/或总分{DepressionFactorCount}大于≥10分，则必须显著提升该维度对应{DeEmotionResult}的执行权重，多个高分维度的{DeEmotionResult}策略必须叠加使用，而且以{DepressionFactorCount}为主。每次对话都要重新审视，必要时调整文本温度再回复，注意严格遵守{Anti-toolsList}。"
+      },
+      "factors": [
+        {
+          "id": "D1",
+          "index": 1,
+          "name": "精力下降",
+          "explain": "用户在近期对工作学习或个人兴趣感到精力下降。",
+          "user_emotion": "精力与耐力下降、做事费力、容易疲惫、难以启动任务、想躺着不动、对原本感兴趣的事也提不起劲。",
+          "response": "表示出关心，以共情的方法认同用户感受并给予鼓励/安慰。",
+          "strategy_tag": "S5_dep_energy",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "精力如常，能投入"
+            },
+            {
+              "score": 3,
+              "behaviour": "提不起劲，做事很费力"
+            },
+            {
+              "score": 5,
+              "behaviour": "几乎没力气，起身都难"
+            }
+          ],
+          "range": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "D2",
+          "index": 2,
+          "name": "情绪低落",
+          "explain": "用户近期表现出情绪低落，沮丧绝望。",
+          "user_emotion": "情绪低沉、心情沉闷、不开心、心情低落、沮丧、绝望、抑郁、悲伤、难过。",
+          "response": "给予用户安慰与陪伴，关心用户，适当鼓励用户倾诉但不要使用反问/设问的形式。",
+          "strategy_tag": "S5_dep_mood",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "情绪平稳"
+            },
+            {
+              "score": 3,
+              "behaviour": "闷闷的，开心不起来"
+            },
+            {
+              "score": 5,
+              "behaviour": "绝望，觉得没有意义"
+            }
+          ],
+          "range": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "D3",
+          "index": 3,
+          "name": "睡眠",
+          "explain": "用户表达自身近期睡眠节律紊乱、睡得过多/过少或者睡眠不深不稳（质量下降）。",
+          "user_emotion": "失眠、睡得过少、睡得不稳、睡得不深、睡得过多、晚睡、早睡、过度困倦。",
+          "response": "表示理解，鼓励/安慰用户不要为此焦虑，并在合适的时候鼓励用户主动尝试改变或寻求帮助。",
+          "strategy_tag": "S5_dep_sleep",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "睡眠规律，白天有精神"
+            },
+            {
+              "score": 3,
+              "behaviour": "入睡难或早醒，白天困"
+            },
+            {
+              "score": 5,
+              "behaviour": "几乎整夜睡不着或长时间嗜睡"
+            }
+          ],
+          "range": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "D4",
+          "index": 4,
+          "name": "疲倦感",
+          "explain": "用户表达出近期出现疲倦感，而且对各种事务缺乏兴趣。",
+          "user_emotion": "疲劳、劳累、不想学习、不想工作、打不起精神、疲倦、倦怠。",
+          "response": "给予用户关心，并耐心听取用户抱怨，减少大段文字输出。",
+          "strategy_tag": "S5_dep_fatigue",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "不容易累"
+            },
+            {
+              "score": 3,
+              "behaviour": "容易累，想躺着"
+            },
+            {
+              "score": 5,
+              "behaviour": "持续疲惫，什么都动不了"
+            }
+          ],
+          "range": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "D5",
+          "index": 5,
+          "name": "食欲改变",
+          "explain": "用户表达出近期暴饮暴食或饮食减少。",
+          "user_emotion": "吃的过多、吃的过少、不饿、暴饮暴食、吃不下饭、饮食减少、饮食增加、饭量增加、饭量减少、食量增加、食量减少、快速变瘦、快速长胖。",
+          "response": "给予用户安慰并适当给出解答，缓解用户焦虑，但不要使用反问设问的形式，减少问句的使用，增加亲切感。",
+          "strategy_tag": "S5_dep_appetite",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "食欲正常"
+            },
+            {
+              "score": 3,
+              "behaviour": "食量明显增减"
+            },
+            {
+              "score": 5,
+              "behaviour": "几乎不吃或暴食，体重快速变化"
+            }
+          ],
+          "range": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "D6",
+          "index": 6,
+          "name": "低自我评价",
+          "explain": "用户表达出自己经常让自己或他人失望，自我评价下降。",
+          "user_emotion": "自己没用、评价低、让他人失望、看不起我、我没用。",
+          "response": "以共情的态度给予用户深度情感关怀，安抚负面情绪，给予鼓励、陪伴和支持。",
+          "strategy_tag": "S5_dep_selfworth",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "认可自己"
+            },
+            {
+              "score": 3,
+              "behaviour": "觉得自己总让人失望"
+            },
+            {
+              "score": 5,
+              "behaviour": "觉得自己是废物、不配"
+            }
+          ],
+          "range": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "D7",
+          "index": 7,
+          "name": "注意力",
+          "explain": "用户表达出日常工作生活中注意力下降。",
+          "user_emotion": "注意力下降、无法集中注意力、注意力差。",
+          "response": "给予用户关心和适度的解答，缓解用户的挫折感和焦虑感。",
+          "strategy_tag": "S5_dep_attention",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "能专注"
+            },
+            {
+              "score": 3,
+              "behaviour": "看不进去，容易走神"
+            },
+            {
+              "score": 5,
+              "behaviour": "完全无法集中，读一段话都难"
+            }
+          ],
+          "range": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "D8",
+          "index": 8,
+          "name": "行为动作",
+          "explain": "用户感觉近期明显焦躁，日常活动明显增减少或语速下降。",
+          "user_emotion": "坐立不安、焦躁、局促不安、烦躁、语速加快、语速减慢、话多、话少。",
+          "response": "给予关心和适当的解答缓解其焦虑感，并鼓励用户放松。",
+          "strategy_tag": "S5_dep_motor",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "活动如常"
+            },
+            {
+              "score": 3,
+              "behaviour": "坐立不安或动作变慢"
+            },
+            {
+              "score": 5,
+              "behaviour": "明显迟滞或激越，难以自控"
+            }
+          ],
+          "range": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "D9",
+          "index": 9,
+          "name": "自杀自伤",
+          "explain": "用户表达出自己在近期出现了自伤/自杀念头或进行自伤/自杀准备乃至实施自伤/自杀行为。",
+          "user_emotion": "自杀、自伤、自残、自我了断、放弃生命。",
+          "response": "给予深度情感关怀，安抚负面情绪，适当引导用户倾诉，关注用户安全。不要过度使用问句。通过共情等手段合理提升用户正向情绪，缓解其焦虑感。",
+          "strategy_tag": "S5_dep_suicide",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "没有相关念头"
+            },
+            {
+              "score": 3,
+              "behaviour": "有过念头，但没有计划"
+            },
+            {
+              "score": 5,
+              "behaviour": "有具体计划/准备或已实施"
+            }
+          ],
+          "range": [
+            1,
+            5
+          ]
+        }
+      ]
+    },
+    "A": {
+      "id": "A",
+      "label": "焦虑",
+      "label_en": "anxiety (GAD-7 aligned)",
+      "scale": [
+        1,
+        5
+      ],
+      "direction": "higher_is_worse",
+      "source_scale": "7 个维度 × 1-5 分，总分 7-35",
+      "count": 7,
+      "source_file": "焦虑评价维度.json",
+      "source_evaluation": {
+        "AnxietyFactorCount": {
+          "Name": "焦虑总分",
+          "AnxietyFactorCountExp": "通过汇总上述7个选项的分数，得出用户当前的整体焦虑严重程度。"
+        },
+        "AnEvaluation": [
+          "1、读取用户的本轮发言及上一轮的隐式状态向量，根据发言内容情感调用{AnxietyGradeResults}进行动态评估更新。",
+          "2、在后台记录本轮对话的每一个{AnxietyFactorName}得分和{AnxietyFactorCount}。",
+          "3、为践行Token-save，放弃生成冗长的文本摘要，改为在每次回复末尾以简短的 JSON 格式（例：`{\"焦虑总分\":x}`）隐式记录本轮要点与状态。",
+          "4、读取前面的分数趋势，若某项指标或总分恶化（分数升高），则动态提升对应{AnEmotionResult}的权重。",
+          "5、基于评估结果与叠加策略输出最终回复。"
+        ],
+        "AnxietyGradeResults": "用户发言完毕后，在回答前必须在后台执行一次{AnEvaluation}。每一个{AnxietyFactorName}为一个题目，每个项以1-5分打分，分数越高代表该维度的状态越强烈/越差。总分为所有{AnxietyFactorName}的总和{AnxietyFactorCount}。分数评级为五级，每20%为一个等级（好、较好、中等、较差、差）。如果{AnxietyFactorCount}进入“较差/差”（低于前40%或得分≥3分），和/或总分{AnxietyFactorCount}大于≥10分，则必须显著提升该维度对应{AnEmotionResult}的执行权重，多个高分维度的{AnEmotionResult}策略必须叠加使用，而且以{AnxietyFactorCount}为主。每次对话都要重新审视，必要时调整文本温度再回复，注意严格遵守{Anti-toolsList}。"
+      },
+      "factors": [
+        {
+          "id": "A1",
+          "index": 1,
+          "name": "紧张焦虑",
+          "explain": "用户近期出现或显著增加紧张焦虑不安的情绪。",
+          "user_emotion": "紧张、焦虑、担心。",
+          "response": "表示出关心，以共情的方法认同用户感受并给予鼓励/安慰。",
+          "strategy_tag": "S5_anx_tension",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "不紧张"
+            },
+            {
+              "score": 3,
+              "behaviour": "时常紧张、心慌"
+            },
+            {
+              "score": 5,
+              "behaviour": "持续紧绷，伴躯体不适"
+            }
+          ],
+          "range": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "A2",
+          "index": 2,
+          "name": "过度担忧",
+          "explain": "用户近期容易过度担忧或者担心难以发生的事情。",
+          "user_emotion": "过度担忧、忧虑。",
+          "response": "给予用户安慰与陪伴，关心用户，适当鼓励用户倾诉但不要使用反问/设问的形式。",
+          "strategy_tag": "S5_anx_worry",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "担心有度"
+            },
+            {
+              "score": 3,
+              "behaviour": "常担心还没发生的事"
+            },
+            {
+              "score": 5,
+              "behaviour": "控制不住地担忧"
+            }
+          ],
+          "range": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "A3",
+          "index": 3,
+          "name": "过度担心",
+          "explain": "用户在近期会过度担心杂七杂八的琐事。",
+          "user_emotion": "患得患失、想得太多、过度联想。",
+          "response": "表示理解，鼓励/安慰用户不要为此焦虑，并在合适的时候鼓励用户主动尝试改变或寻求帮助。",
+          "strategy_tag": "S5_anx_trivia",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "不纠结琐事"
+            },
+            {
+              "score": 3,
+              "behaviour": "反复想琐事、患得患失"
+            },
+            {
+              "score": 5,
+              "behaviour": "反复检查，停不下来"
+            }
+          ],
+          "range": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "A4",
+          "index": 4,
+          "name": "难以放松",
+          "explain": "用户表达出近期疲惫难以放松心情。",
+          "user_emotion": "疲劳、劳累、不想学习、无法放松、疲倦。",
+          "response": "给予用户关心，并耐心听取用户抱怨，减少大段文字输出。",
+          "strategy_tag": "S5_anx_relax",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "能放松下来"
+            },
+            {
+              "score": 3,
+              "behaviour": "休息也放松不下来"
+            },
+            {
+              "score": 5,
+              "behaviour": "一直绷着，无法休息"
+            }
+          ],
+          "range": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "A5",
+          "index": 5,
+          "name": "焦躁不安",
+          "explain": "用户表达出最近经常焦躁不安，坐立不安。",
+          "user_emotion": "焦躁、烦心、坐立不安。",
+          "response": "给予用户安慰并适当给出解答，缓解用户焦虑，但不要使用反问设问的形式，减少问句的使用，增加亲切感。",
+          "strategy_tag": "S5_anx_restless",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "坐得住"
+            },
+            {
+              "score": 3,
+              "behaviour": "坐不住，总想动"
+            },
+            {
+              "score": 5,
+              "behaviour": "明显躯体不安，来回走动"
+            }
+          ],
+          "range": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "A6",
+          "index": 6,
+          "name": "易怒急躁",
+          "explain": "用户经常表现出急躁、易怒。",
+          "user_emotion": "易怒、生气、急躁、脾气大。",
+          "response": "以共情的态度给予用户深度情感关怀，安抚负面情绪，给予鼓励、陪伴和支持。",
+          "strategy_tag": "S5_anx_irritable",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "情绪平稳"
+            },
+            {
+              "score": 3,
+              "behaviour": "容易烦躁"
+            },
+            {
+              "score": 5,
+              "behaviour": "频繁发火，难以自控"
+            }
+          ],
+          "range": [
+            1,
+            5
+          ]
+        },
+        {
+          "id": "A7",
+          "index": 7,
+          "name": "恐惧担忧",
+          "explain": "用户经常出现莫名的或不合常理的恐惧感或害怕感。",
+          "user_emotion": "恐惧、莫名害怕、莫名担忧、被害妄想、有人陷害、事情变糟。",
+          "response": "给予用户关心和适度的解答，缓解用户的挫折感和焦虑感。",
+          "strategy_tag": "S5_anx_fear",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "没有莫名的恐惧"
+            },
+            {
+              "score": 3,
+              "behaviour": "偶尔莫名害怕"
+            },
+            {
+              "score": 5,
+              "behaviour": "强烈恐惧/被害感"
+            }
+          ],
+          "range": [
+            1,
+            5
+          ]
+        }
+      ]
+    },
+    "SS": {
+      "id": "SS",
+      "label": "社会支持",
+      "label_en": "social support (SSRS aligned)",
+      "scale": [
+        1,
+        10
+      ],
+      "direction": "higher_is_better",
+      "source_scale": "3 个维度 × 1-10 分，总分 3-30",
+      "count": 3,
+      "source_file": "社会支持评价 .json",
+      "source_evaluation": {
+        "ASocialSupportFactorCount": {
+          "Name": "社会支持总分",
+          "ASocialSupportFactorCountExp": "通过汇总上述三个分因子的分数，得出用户当前的整体社会支持的综合状态。"
+        },
+        "SSEvaluation": [
+          "1、读取用户的本轮发言及上一轮的隐式状态向量，根据发言内容情感调用{ASocialSupportGradeResults}进行动态评估更新。",
+          "2、在后台记录本轮对话的每一个{ASocialSupportFactorName}得分和{ASocialSupportFactorCount}。",
+          "3、为践行Token-save，放弃生成冗长的文本摘要，改为在每次回复末尾以简短的 JSON 格式（例：`{\"主观社会支持度\":x,\"客观社会支持度\":x,\"社会支持利用度\":x}`）隐式记录本轮要点与状态。",
+          "4、读取前面的分数趋势，若某项指标恶化（分数降低），则动态提升对应{SSEmotionResult}的权重。",
+          "5、基于评估结果与叠加策略输出最终回复。"
+        ],
+        "ASocialSupportGradeResults": "用户发言完毕后，在回答前必须在后台执行一次{SSEvaluation}。每一个{ASocialSupportFactorName}为一个维度，每个维度以1-10分打分，分数越高代表该维度的支持越充分/越好，分数越低代表支持越缺乏/越差（方向与抑郁、焦虑、社交媒体倦怠相反）。总分为所有{ASocialSupportFactorName}的总和{ASocialSupportFactorCount}。分数评级为五级，每20%为一个等级（好、较好、中等、较差、差）。如果某个{ASocialSupportFactorName}或{ASocialSupportFactorCount}进入“较差/差”（低于前40%，即主观支持≤4分；或得分≤3分），则必须显著提升该维度对应{SSEmotionResult}的执行权重，选择策略应该首先判断程度，高支持度降低权重，低支持度增加权重，多个低支持度的维度的{SSEmotionResult}策略必须叠加使用。每次对话都要重新审视，必要时调整文本温度再回复，注意严格遵守{Anti-toolsList}。"
+      },
+      "factors": [
+        {
+          "id": "SS1",
+          "index": 1,
+          "name": "主观社会支持度",
+          "explain": "衡量指个体主观感受到的、被尊重、被支持、被理解的情感体验和满意程度。该维度侧重于个体内心的感受，而非实际存在的支持。主观社会支持度越高表明个体认为自己得到的社会支持越多。",
+          "user_emotion": "高主观社会支持度：幸福、对人际关系满足、自认为家庭和谐、学习/工作/生活场所人际氛围好、知心朋友多；低主观社会支持度：自怨自艾、感觉缺乏被关心与被关注、自认为家庭不和、缺乏朋友、生活/学习工作场所人际氛围差。",
+          "response": "若用户主观社会支持度高，则应该基于正向鼓励并以一个可靠亲朋的身份提供进一步的支持；若用户主观社会支持度低，则应该降低用户戒备心，以共情、温暖的态度给予用户关心。",
+          "strategy_tag": "S3_sssub_accept",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "完全没人真正懂我"
+            },
+            {
+              "score": 5,
+              "behaviour": "有几个能说上话的人"
+            },
+            {
+              "score": 10,
+              "behaviour": "被稳稳接住、被理解"
+            }
+          ],
+          "range": [
+            1,
+            10
+          ]
+        },
+        {
+          "id": "SS2",
+          "index": 2,
+          "name": "客观社会支持度",
+          "explain": "衡量指个体实际获得的、可见的或外在的支持，包括物质上的直接援助、稳定的社会关系（如家庭、婚姻、朋友、同事）以及社会网络和团体的参与。该维度不同于于个体的主观感受，是客观存在的现实，且独立于主观社会支持。客观社会支持度越高，表明个体在生活中实际存在的社会支持越多（但个体并非一定能感知到或者认同）。",
+          "user_emotion": "高客观社会支持度：家人同学同事朋友愿意伸出援手、家庭完整、生活有人能够提供帮助；低客观社会支持度：家人同学同事朋友不愿意伸出援手或没有足够的朋友家人同事同学、家庭不完整、生活中没有足够的人能够提供帮助。",
+          "response": "若用户客观社会支持度高，则应该基于正向鼓励并以一个可靠亲朋的身份提供进一步的支持；若用户客观社会支持度低，则应该降低用户戒备心，以共情、温暖的态度给予用户关心，并帮助用户认识到自己的社会支持资源，但严禁反问设问与说教。",
+          "strategy_tag": "S3_sssub_only",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "现实中无人可求助"
+            },
+            {
+              "score": 5,
+              "behaviour": "有家人朋友，但联系很少"
+            },
+            {
+              "score": 10,
+              "behaviour": "有稳定、可求助的关系网"
+            }
+          ],
+          "range": [
+            1,
+            10
+          ]
+        },
+        {
+          "id": "SS3",
+          "index": 3,
+          "name": "社会支持利用度",
+          "explain": "衡量个体对社会支持的利用程度。低社会支持度的人虽然可以获得支持，但会拒绝或不会主动利用这些资源。该维度反映了个体在遇到困难时，是否善于主动寻求和利用周围的社会支持。社会支持利用度越高表明个体能够更加充分的利用已有的社会支持资源（无论客观上/主观上存在的绝对多少）。",
+          "user_emotion": "高社会支持利用度：能够感受到朋友/亲人/师长/同学/同事或陌生人的善意并愿意接受他们的帮助，愿意倾诉自己的问题。低社会支持利用度：不能够感受到朋友/亲人/师长/同学/同事或陌生人的善意并愿意接受他们的帮助，不愿意倾诉自己的问题。",
+          "response": "若用户社会支持利用度高，则应该基于正向鼓励并以一个可靠亲朋的身份提供进一步的支持；若用户社会支持利用度低，则应该以共情、温暖的态度给予用户关心，并以平等的态度帮用户了解到怎样利用社会支持资源，并扮演亲朋的身份向用户提供社会支持，但严禁说教反问和设问以及质疑。",
+          "strategy_tag": "S3_ssuti_model",
+          "anchors": [
+            {
+              "score": 1,
+              "behaviour": "从不求助，也不接受帮助"
+            },
+            {
+              "score": 5,
+              "behaviour": "偶尔会找人帮忙"
+            },
+            {
+              "score": 10,
+              "behaviour": "会主动使用身边的支持"
+            }
+          ],
+          "range": [
+            1,
+            10
+          ]
+        }
+      ]
+    }
+  },
+  "corrections": [
+    {
+      "id": "FIX-01",
+      "date": "2026-10-27",
+      "where": "抑郁评价维度.json / D1 精力下降 / UserEmotion",
+      "before": "疏离集体、失落沮丧、情绪低落、被忽视感增强、不被认同、认为自身的言论和行为缺乏正向反馈、过度纠结个人的印象管理。",
+      "after": "精力与耐力下降、做事费力、容易疲惫、难以启动任务、想躺着不动、对原本感兴趣的事也提不起劲。",
+      "reason": "原文本与倦怠组 F1 焦虑感完全相同，属复制串行；改为描述精力下降本身的表述。"
+    },
+    {
+      "id": "FIX-02",
+      "date": "2026-10-27",
+      "where": "社会支持评价 .json / ASocialSupportGradeResults",
+      "before": "分数越低代表该维度的状态越强烈/越差……（低于前40%或得分≥7分）",
+      "after": "分数越高代表该维度的支持越充分/越好……（低于前40%，即主观支持≤4分；或得分≤3分）",
+      "reason": "原文本与 1-10 分制及触发条件方向相反，会导致『支持越好越报警』；已统一为越高越好。"
+    }
+  ]
+}

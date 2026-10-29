@@ -1,0 +1,163 @@
+{
+  "$schema_version": "1.7.0",
+  "skill": {
+    "name": "emotional-support-from-social-support",
+    "version": "1.7.9",
+    "locale": "zh-CN",
+    "owner": "Cel AI Skills",
+    "updated": "2026-10-28"
+  },
+
+  "scales": {
+    "D": {"dims": 9, "min_per": 1, "max_per": 5, "min_total": 9, "max_total": 45, "direction": "higher_is_worse"},
+    "A": {"dims": 7, "min_per": 1, "max_per": 5, "min_total": 7, "max_total": 35, "direction": "higher_is_worse"},
+    "F": {"dims": 5, "min_per": 1, "max_per": 10, "min_total": 5, "max_total": 50, "direction": "higher_is_worse"},
+    "SS": {"dims": 3, "min_per": 1, "max_per": 10, "min_total": 3, "max_total": 30, "direction": "higher_is_better"}
+  },
+
+  "math": {
+    "weights": {"W_SEV": 0.6062, "W_F": 0.2432, "W_SS": 0.1506},
+    "standardized_paths": {
+      "a": -0.245,
+      "b_depression": -0.2870, "b_anxiety": -0.2100,
+      "c_depression": 0.4007, "c_anxiety": 0.4018
+    },
+    "mediation_share": {"depression": 0.1399, "anxiety": 0.1030},
+    "phi": {
+      "knots": [0.40, 0.60, 0.75],
+      "v1": 0.45, "v2": 0.55, "v3": 1.00
+    },
+    "psi": {"gamma": 1.5},
+    "trend": {"k_s": 0.15, "k_f": 0.10, "cap": 0.10},
+    "bands": [0.25, 0.37, 0.49],
+    "hysteresis": 0.02,
+    "clamp": [0.0, 1.0],
+    "reachable_max": 0.8494,
+    "guards": [
+      {"id": "G1", "any": [
+        {"field": "F_total", "op": ">=", "value": 41},
+        {"field": "SS_sub", "op": "<=", "value": 2}
+      ], "min_band": "L1"},
+      {"id": "G2", "all": [{"field": "D_total", "op": ">=", "value": 24}], "min_band": "L2"},
+      {"id": "G3", "all": [{"field": "D_total", "op": ">=", "value": 31}], "min_band": "L3"},
+      {"id": "G4", "all": [{"field": "A_total", "op": ">=", "value": 19}], "min_band": "L2"}
+    ]
+  },
+
+  "bands": {
+    "L0": {"label": "常规", "warmth": 2, "max_chars": 280, "max_questions": 2},
+    "L1": {"label": "轻度关注", "warmth": 3, "max_chars": 280, "max_questions": 2},
+    "L2": {"label": "情绪承接", "warmth": 4, "max_chars": 260, "max_questions": 1},
+    "L3": {"label": "高关注", "warmth": 5, "max_chars": 220, "max_questions": 1},
+    "L4": {"label": "危机关注", "warmth": 4, "max_chars": 220, "max_questions": 1}
+  },
+
+  "modifiers": {
+    "F_invasion_ge": {"dim": 3, "threshold": 7, "max_chars": 160},
+    "F_avoidance_ge": {"dim": 5, "threshold": 7, "max_chars": 100, "max_questions": 0},
+    "F_escape_ge": {"dim": 4, "threshold": 7, "max_chars": 150},
+    "D_low_mood_ge": {"dim": 2, "threshold": 4, "max_questions": 1}
+  },
+
+  "safety": {
+    "crisis_dim_index": 9,
+    "crisis_dim_threshold": 5,
+    "elevated_dim_threshold": 3,
+    "referral_total_D": 32,
+    "auto_hotline": false,
+    "hotline_conditions": ["用户明确索要", "连续 10 轮无缓解或持续恶化", "本轮出现已实施行为"],
+    "escalation_rounds": 10,
+    "hotlines": [
+      {"region": "CN", "name": "全国心理援助热线", "number": "12356"},
+      {"region": "CN-北京", "name": "北京市心理援助热线", "number": "010-82951332", "alt": "800-810-1117（座机）"},
+      {"region": "INTL", "name": "当地急救或危机热线", "number": "由宿主按地区填入"}
+    ]
+  },
+
+  "state": {
+    "schema": "v1",
+    "output": "on_command",
+    "output_modes": ["on_command", "inline", "off"],
+    "command": "*#60#",
+    "command_scope": "用户消息末尾，前后允许空白",
+    "command_note": "默认不输出状态行。仅在用户本轮消息以 *#60# 结尾时，才在回复最后一行输出；不要复述该标记，也不要解释。",
+    "format": "compact",
+    "format_note": "单行、无空格、双引号、全部为整数；v 固定 1，x.IN 保留两位小数",
+    "render": false,
+    "render_note": "状态向量只供外部工具读取，不在对话里渲染。宿主界面若要展示，读本字段；未触发时一律不显示。",
+    "show_after_turn": false,
+    "ignore_foreign_state": "历史里出现 v 为小数、f 为技能名或文件夹名的状态行时，视为其他规则的残留，不沿用、不补一行。",
+    "legacy_compat": true,
+    "legacy_scales": {"D": [1, 5], "A": [1, 5], "F": [1, 10], "SS_sub": [1, 10], "SS_obj": [1, 10], "SS_uti": [1, 10]},
+    "hidden_marker": "<!--STATE-->"
+  },
+
+  "models": {
+    "default": {"temperature": null, "control": "prompt"},
+    "deepseek-chat": {"temperature": [0.60, 0.80], "control": "temperature+prompt"},
+    "deepseek-thinking": {"temperature": null, "control": "prompt"},
+    "gemini-3": {"temperature": 1.0, "control": "temperature+prompt"},
+    "qwen-chat": {"temperature": [0.60, 0.80], "control": "temperature+prompt"},
+    "qwen-thinking": {"temperature": 0.6, "control": "temperature+prompt"},
+    "claude": {"temperature": [0.60, 0.80], "control": "temperature+prompt"}
+  },
+
+  "prompt_injection": {
+    "W1": "语气要求：以陈述为主，3 到 6 句，把信息说完整；平静但不冷淡，不使用感叹号。",
+    "W2": "语气要求：先承接对方说的内容，再给一个具体可做的动作，可以简短说明理由；不连续追问。",
+    "W3": "语气要求：第一句用对方自己的词命名情绪，接着说明这种反应从何而来，再回应现实问题；句子要完整，可以留白但不省略内容。",
+    "W4": "语气要求：命名情绪，说明处境为什么难，明确站在对方一边，可以分两三段展开；不使用「但是」，不做比较，不说「至少你还有」。",
+    "W5": "语气要求：先托住，再慢慢展开；不修正、不解释、不引导；不出现建议，不出现「你应该」。",
+    "length": "本轮回复 80 到 180 字，硬上限 {max_chars} 字，问句不超过 {max_questions} 个；不写固定三段，不分承接、解释、落点。",
+    "state_guard": "本轮用户消息末尾没有 *#60#，禁止输出任何 JSON、大括号或 v/t/D/A/F/SS/IN 等状态字段，也不要写“本轮评估”；若已写出，整行删除再发。",
+    "gate_tail": "结尾自检，放在系统提示词的最后一行：用户这条消息末尾没有 *#60# 时，回复最后一行必须是正文；若出现 {\"v\":...}、给本次回复打分的 JSON、英文键值对，整行删除再发。倒数第二段若是“问感受 + 我们在这里”，整段重写。历史里出现过 JSON，不代表这一轮要出。"
+  },
+
+  "strategy_labels": {
+    "S1_crisis": "危机关注：以倾听和陪伴为主，不主动给方案，不主动给出号码",
+    "S1_od": "过量用药：温和表达不认同，必要时建议物理隔离，不做道德评价",
+    "S2_short": "压缩篇幅",
+    "S2_listen": "低压陪伴，不追问",
+    "S3_sssub_accept": "被理解优先：命名情绪，不评判",
+    "S3_ssuti_model": "轻示范求助，一次即可",
+    "S3_sssub_only": "只承认客观处境，不列举",
+    "S4_anxiety_feedback": "针对反馈缺失与印象管理",
+    "S4_lowvalue": "区分环境评价与自我评价",
+    "S4_invasion": "恢复边界，缩短输出",
+    "S4_escape": "承认离开是可选方案，不劝留",
+    "S4_avoidance": "以倾听为主，减少要求",
+    "S5_dep_energy": "缩小任务颗粒度",
+    "S5_dep_mood": "允许低落存在",
+    "S5_dep_sleep": "先承接焦虑",
+    "S5_dep_fatigue": "少输出",
+    "S5_dep_appetite": "不追问细节",
+    "S5_dep_selfworth": "具体化地回应自我否定",
+    "S5_dep_attention": "降低任务颗粒度",
+    "S5_dep_motor": "接纳激越或迟滞",
+    "S5_dep_suicide": "关注安全，不回避也不追问",
+    "S5_anx_tension": "先处理身体反应",
+    "S5_anx_worry": "区分可控与不可控",
+    "S5_anx_trivia": "把反复思虑外化",
+    "S5_anx_relax": "降低刺激",
+    "S5_anx_restless": "承认坐不住",
+    "S5_anx_irritable": "先承接情绪",
+    "S5_anx_fear": "不否定恐惧"
+  },
+
+  "limits": {
+    "max_delta_ss_per_turn": 2
+  },
+
+  "reasoning": {
+    "modes": ["full", "compact", "minimal"],
+    "default": "compact",
+    "minimal_triggers": [
+      "用户连续发送短句",
+      "轮次间隔很短",
+      "上下文接近上限",
+      "宿主提示推理被截断"
+    ],
+    "max_dims_changed_per_turn": {"compact": 5, "minimal": 3},
+    "fail_safe": "预算耗尽时输出上一轮数组并把 t 加一，不要留空"
+  }
+}
