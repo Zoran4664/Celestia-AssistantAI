@@ -74,6 +74,9 @@ V0.2.5
 V0.3.0
 修复了部分正则式的Bug，在上一版上更新并新增新增了大量功能，尤其是支持了复杂的Skills执行能力和Role Play功能。
 
+V0.3.1
+增加了基于社会支持与社交倦怠中介效应模型（修改版）的Role Play情感支持skills：emotional-support-from-social-support，可以导入skillspub后用指令调用开启。
+
 新增/修正：
 
 - **记忆体系**：记忆传送带 `memory_compile.py`（today → daily → week → longterm）、
